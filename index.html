@@ -702,6 +702,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 </head>
 <body>
 
+<!-- 密码验证遮罩 -->
+<div id="authOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#f5f6fa;z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="text-align:center;max-width:360px;width:90%;">
+    <div style="font-size:28px;font-weight:700;color:#1e2333;margin-bottom:6px;">HASSELBLAD</div>
+    <div style="font-size:14px;color:#6b7280;margin-bottom:32px;">欧美店铺增长规划看板</div>
+    <div style="background:#fff;border:1px solid #e2e5ee;border-radius:12px;padding:32px 28px;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+      <div style="font-size:15px;font-weight:600;color:#1e2333;margin-bottom:16px;">请输入访问密码</div>
+      <input type="password" id="authPassword" placeholder="输入密码..." onkeydown="if(event.key==='Enter')verifyPassword()" style="width:100%;padding:10px 14px;border:1px solid #e2e5ee;border-radius:8px;font-size:14px;margin-bottom:12px;outline:none;box-sizing:border-box;" autofocus>
+      <div id="authError" style="color:#dc2626;font-size:12px;margin-bottom:10px;display:none;">密码错误，请重试</div>
+      <button onclick="verifyPassword()" style="width:100%;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">进入看板</button>
+    </div>
+  </div>
+</div>
+
+<div id="mainApp" style="display:none;">
 <div class="header">
   <div style="display:flex;justify-content:space-between;align-items:center;">
     <div>
@@ -2764,6 +2779,38 @@ function renderProductTable() {
 }
 
 renderProductTable();
+
+// ==================== PASSWORD AUTH ====================
+async function sha256(text) {
+  const data = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+const VALID_HASHES = [
+  '034e0b435a9c6e6d9d1273b90568e09f63f708bd258357d232becc609c899c4a',
+  'ab8b24ea95017cd0c5076e75032d5a89235b82686b1cfacc014602c6e6e2a58d',
+];
+
+if (sessionStorage.getItem('hasselblad_auth') === 'true') {
+  document.getElementById('authOverlay').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+}
+
+async function verifyPassword() {
+  const input = document.getElementById('authPassword').value;
+  const inputHash = await sha256(input);
+  if (VALID_HASHES.includes(inputHash)) {
+    sessionStorage.setItem('hasselblad_auth', 'true');
+    document.getElementById('authOverlay').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+  } else {
+    document.getElementById('authError').style.display = 'block';
+    document.getElementById('authPassword').value = '';
+    document.getElementById('authPassword').focus();
+  }
+}
 </script>
+</div>
 </body>
 </html>
