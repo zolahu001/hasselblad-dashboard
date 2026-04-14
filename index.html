@@ -1,0 +1,2655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>哈苏欧美店铺增长规划看板 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f5f6fa;
+  --card: #ffffff;
+  --border: #e2e5ee;
+  --text: #1e2333;
+  --text-secondary: #6b7280;
+  --accent-blue: #2563eb;
+  --accent-green: #059669;
+  --accent-red: #dc2626;
+  --accent-amber: #d97706;
+  --accent-purple: #7c3aed;
+  --accent-cyan: #0891b2;
+  --eu-color: #7c3aed;
+  --na-color: #2563eb;
+  --target-color: #9ca3af;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height:100vh; }
+
+.header {
+  background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 50%, #2563eb 100%);
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border);
+}
+.header h1 { font-size: 24px; font-weight: 700; letter-spacing: 0.5px; color: #fff; }
+.header .subtitle { color: rgba(255,255,255,0.75); font-size: 14px; margin-top: 4px; }
+
+.tabs {
+  display: flex;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+}
+.tab {
+  padding: 14px 24px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); }
+
+.content { padding: 24px 32px; max-width: 1440px; margin: 0 auto; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Cards */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+
+/* KPI Row */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.kpi-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+.kpi-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-value { font-size: 28px; font-weight: 700; margin: 8px 0 4px; }
+.kpi-sub { font-size: 12px; color: var(--text-secondary); }
+.kpi-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+.badge-green { background: rgba(5,150,105,0.1); color: var(--accent-green); }
+.badge-red { background: rgba(220,38,38,0.1); color: var(--accent-red); }
+.badge-amber { background: rgba(217,119,6,0.1); color: var(--accent-amber); }
+
+/* Region toggle */
+.region-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.region-btn {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.region-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+.region-btn.eu-active { background: var(--eu-color); border-color: var(--eu-color); color: #fff; }
+
+/* Chart containers */
+.chart-container { position: relative; height: 320px; margin: 12px 0; }
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .chart-row { grid-template-columns: 1fr; } }
+
+/* Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table thead th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #f0f3f9;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+}
+.data-table tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f1f5;
+}
+.data-table tbody tr:hover { background: #f8f9fc; }
+.text-right { text-align: right; }
+.text-green { color: var(--accent-green); }
+.text-red { color: var(--accent-red); }
+
+/* Scrollable table wrapper */
+.table-scroll {
+  max-height: 400px;
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.table-scroll::-webkit-scrollbar { width: 6px; }
+.table-scroll::-webkit-scrollbar-track { background: #f5f6fa; }
+.table-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+/* Growth plan */
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  background: var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+.plan-header, .plan-cell {
+  padding: 12px 14px;
+  font-size: 12px;
+  background: var(--card);
+}
+.plan-header {
+  font-weight: 700;
+  color: var(--accent-blue);
+  font-size: 13px;
+  text-align: center;
+}
+.plan-dim-header {
+  grid-column: 1 / -1;
+  background: #f0f3f9;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.plan-cell ul {
+  list-style: none;
+  padding: 0;
+}
+.plan-cell li {
+  padding: 3px 0;
+  line-height: 1.5;
+  position: relative;
+  padding-left: 14px;
+}
+.plan-cell li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+}
+
+/* Quarterly target table */
+.q-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+.q-table th, .q-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.q-table thead th {
+  background: #f0f3f9;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 12px;
+}
+.q-table .region-label {
+  font-weight: 600;
+  color: var(--text);
+}
+.q-current { background: #f8f9fc; }
+
+/* Insight box */
+.insight-box {
+  background: #fffbeb;
+  border-left: 3px solid var(--accent-amber);
+  padding: 14px 18px;
+  border-radius: 0 8px 8px 0;
+  margin: 16px 0;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.insight-box strong { color: var(--accent-amber); }
+
+/* Country expansion table */
+.expansion-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 12px;
+}
+.expansion-table th {
+  padding: 8px 12px;
+  background: #f3f0ff;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 11px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.expansion-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f1f5;
+}
+.priority-high { color: var(--accent-red); font-weight: 600; }
+.priority-med { color: var(--accent-amber); font-weight: 600; }
+.priority-low { color: var(--accent-green); font-weight: 600; }
+
+/* Ad metrics */
+.ad-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 12px 0;
+}
+.ad-metric {
+  text-align: center;
+  padding: 14px;
+  background: #f0f3f9;
+  border-radius: 8px;
+}
+.ad-metric-value { font-size: 20px; font-weight: 700; margin: 4px 0; }
+.ad-metric-label { font-size: 11px; color: var(--text-secondary); }
+
+/* GA4 traffic */
+.traffic-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 900px) { .traffic-grid { grid-template-columns: 1fr; } }
+.traffic-channel {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f1f5;
+  font-size: 13px;
+}
+.traffic-bar {
+  height: 4px;
+  background: var(--accent-blue);
+  border-radius: 2px;
+  margin-top: 4px;
+}
+
+/* Sub-tabs */
+.sub-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  background: #f0f1f5;
+  padding: 4px;
+  border-radius: 8px;
+  width: fit-content;
+}
+.sub-tab {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sub-tab.active { background: var(--accent-blue); color: #fff; }
+
+/* Growth plan editable cells */
+.plan-cell-wrap {
+  background: var(--card);
+  padding: 12px 14px;
+  font-size: 12px;
+  position: relative;
+  min-height: 80px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.plan-cell-wrap:hover { background: #f8f9fc; }
+.plan-cell-wrap:hover .cell-actions { opacity: 1; }
+.cell-actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.cell-btn {
+  width: 24px; height: 24px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+.cell-btn:hover { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+.cell-btn.ai-cell-btn:hover { background: var(--accent-purple); border-color: var(--accent-purple); }
+.plan-cell-wrap ul { list-style: none; padding: 0; }
+.plan-cell-wrap li {
+  padding: 3px 0;
+  line-height: 1.5;
+  position: relative;
+  padding-left: 14px;
+}
+.plan-cell-wrap li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+}
+.plan-cell-wrap.empty-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Action buttons */
+.ai-btn, .export-btn, .import-btn, .settings-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-weight: 500;
+}
+.ai-btn { background: #f3f0ff; color: var(--accent-purple); border-color: #ddd6fe; }
+.ai-btn:hover { background: #ede9fe; }
+.export-btn { background: #ecfdf5; color: var(--accent-green); border-color: #a7f3d0; }
+.export-btn:hover { background: #d1fae5; }
+.import-btn { background: #eff6ff; color: var(--accent-blue); border-color: #bfdbfe; }
+.import-btn:hover { background: #dbeafe; }
+.settings-btn { background: transparent; color: var(--text-secondary); }
+.settings-btn:hover { background: #f0f1f5; color: var(--text); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-box {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 560px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 22px;
+  cursor: pointer;
+}
+.modal-close:hover { color: var(--text); }
+#editTextarea {
+  display: none;
+}
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  align-items: center;
+}
+.save-btn {
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: none;
+  background: var(--accent-blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.save-btn:hover { background: #2563eb; }
+.cancel-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+}
+.cancel-btn:hover { background: #f0f1f5; }
+
+/* Rich Editor */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 8px;
+  background: #f8f9fc;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  flex-wrap: wrap;
+}
+.toolbar-btn {
+  width: 28px; height: 28px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+}
+.toolbar-btn:hover { background: #e8ecf4; color: var(--text); border-color: var(--border); }
+.toolbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+.color-swatch {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  padding: 0;
+  min-width: 20px;
+}
+.color-swatch:hover { border-color: var(--text); transform: scale(1.15); }
+.highlight-btn { font-weight: 700; font-size: 14px; }
+.rich-editor {
+  min-height: 260px;
+  max-height: 450px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 0 0 8px 8px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.8;
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.rich-editor:focus { border-color: var(--accent-blue); }
+.rich-editor:empty::before {
+  content: '输入规划内容...\A\A支持格式：\A- 用回车换行分段\A- 工具栏可加粗、高亮、换色\A- 空行可用来分隔不同子类别';
+  white-space: pre-wrap;
+  color: rgba(156,163,175,0.4);
+  pointer-events: none;
+}
+.rich-editor ul { margin: 4px 0; padding-left: 18px; }
+.rich-editor li { margin: 2px 0; }
+.rich-editor hr {
+  border: none;
+  border-top: 1px dashed var(--border);
+  margin: 10px 0;
+}
+.cell-rich-content {
+  font-size: 12px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+.cell-rich-content div, .cell-rich-content p { margin: 2px 0; }
+.cell-rich-content hr {
+  border: none;
+  border-top: 1px dashed var(--border);
+  margin: 6px 0;
+}
+
+/* Task table */
+.priority-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 36px;
+  text-align: center;
+}
+.priority-P0 { background: #fef2f2; color: #dc2626; }
+.priority-P1 { background: #fffbeb; color: #d97706; }
+.priority-P2 { background: #eff6ff; color: #2563eb; }
+.priority-P3 { background: #f0fdf4; color: #16a34a; }
+.owner-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.owner-Zola { background: #eff6ff; color: #2563eb; }
+.owner-Xiaodu { background: #ecfdf5; color: #059669; }
+.status-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.status-待启动 { background: #f3f4f6; color: #6b7280; }
+.status-进行中 { background: #eff6ff; color: #2563eb; }
+.status-已完成 { background: #ecfdf5; color: #059669; }
+.status-已搁置 { background: #fef2f2; color: #dc2626; }
+.task-edit-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  border-radius: 4px;
+}
+.task-edit-btn:hover { background: #f0f1f5; color: var(--text); }
+
+/* Task form */
+.task-form { margin-bottom: 14px; }
+.form-row { display: flex; gap: 12px; }
+.form-group {
+  flex: 1;
+  margin-bottom: 12px;
+}
+.form-group label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+}
+.form-group input:focus, .form-group select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+}
+.dim-tag {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.role-card { position: relative; transition: box-shadow 0.15s; }
+.role-card:hover { box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
+.role-edit-hint {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.role-card:hover .role-edit-hint { opacity: 1; }
+
+/* Export dropdown */
+.export-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  z-index: 100;
+  min-width: 140px;
+  overflow: hidden;
+}
+.export-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+}
+.export-dropdown button:hover { background: #f0f3f9; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>HASSELBLAD 欧美店铺增长规划看板</h1>
+  <div class="subtitle">2026年度 | 北美 + 欧洲商城 | 数据更新至 Q1</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab(0)">Q1 销售表现</div>
+  <div class="tab" onclick="switchTab(1)">全年增长规划</div>
+  <div class="tab" onclick="switchTab(2)">任务分工</div>
+</div>
+
+<div class="content">
+
+<!-- ==================== TAB 1: Q1 销售表现 ==================== -->
+<div class="tab-content active" id="tab0">
+
+  <!-- KPI Summary -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">Q1 合计目标</div>
+      <div class="kpi-value" style="font-size:22px;">¥54,393,083</div>
+      <div class="kpi-sub">北美 + 欧洲</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Q1 合计实际</div>
+      <div class="kpi-value" style="font-size:22px;">¥44,935,428</div>
+      <div class="kpi-sub">Shopify Total Sales</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Q1 合计达成率</div>
+      <div class="kpi-value" style="color:var(--accent-amber);">82.61%</div>
+      <div class="kpi-badge badge-amber">未达标</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">年进度</div>
+      <div class="kpi-value" style="font-size:22px;">25.47%</div>
+      <div class="kpi-sub">时间进度 25%</div>
+      <div class="kpi-badge badge-green">略超</div>
+    </div>
+  </div>
+
+  <!-- 北美 vs 欧洲 对比 -->
+  <div class="kpi-row">
+    <div class="kpi-card" style="border-left: 3px solid var(--na-color);">
+      <div class="kpi-label" style="color:var(--na-color);">北美 Q1</div>
+      <div class="kpi-value" style="font-size:20px;">¥27,309,185</div>
+      <div class="kpi-sub">目标 ¥26,612,250</div>
+      <div class="kpi-badge badge-green">102.62% 达成</div>
+    </div>
+    <div class="kpi-card" style="border-left: 3px solid var(--eu-color);">
+      <div class="kpi-label" style="color:var(--eu-color);">欧洲 Q1</div>
+      <div class="kpi-value" style="font-size:20px;">¥17,626,243</div>
+      <div class="kpi-sub">目标 ¥27,780,833</div>
+      <div class="kpi-badge badge-red">63.45% 达成</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Q1 广告费用</div>
+      <div class="kpi-value" style="font-size:20px;">$47.6K</div>
+      <div class="kpi-sub">费比 0.8% | ROI 33.20</div>
+      <div class="kpi-badge badge-green">优于目标</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Q1 广告转化金额</div>
+      <div class="kpi-value" style="font-size:20px;">$1.58M</div>
+      <div class="kpi-sub">Conv. Value</div>
+    </div>
+  </div>
+
+  <!-- Insight -->
+  <div class="insight-box">
+    <strong>Q1 关键洞察：</strong>
+    新品 X2D II 100C 和 XCD 2,8-4/35-100E 在1-3月处于紧缺期，销售几乎完全依赖分货量。北美凭借较高的分货量超额完成目标（102.29%），而欧洲因分货严重不足仅达成63.15%。4月起X2D II 100C供应缓解，需要通过广告等运营动作主动拉动销量。
+  </div>
+
+  <!-- 月度销售 vs 目标图表 -->
+  <div class="chart-row">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--na-color)"></span>北美 - 月度销售 vs 目标</div>
+      <div class="chart-container"><canvas id="naMonthlyChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--eu-color)"></span>欧洲 - 月度销售 vs 目标</div>
+      <div class="chart-container"><canvas id="euMonthlyChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- 产品类型分布 -->
+  <div class="chart-row">
+    <div class="card">
+      <div class="card-title">北美 Q1 - 产品类型销售分布</div>
+      <div class="chart-container" style="height:280px;"><canvas id="naProductTypeChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">欧洲 Q1 - 产品类型销售分布</div>
+      <div class="chart-container" style="height:280px;"><canvas id="euProductTypeChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- GA4 流量数据 -->
+  <div class="card">
+    <div class="card-title">Q1 流量渠道分析（GA4）</div>
+    <div class="traffic-grid">
+      <div>
+        <h4 style="font-size:13px;color:var(--na-color);margin-bottom:12px;">北美（1.1-3.19）</h4>
+        <div class="traffic-channel"><span>Official Website</span><span>28,714 sessions | ¥811,134</span></div>
+        <div class="traffic-channel"><span>Direct</span><span>17,944 sessions | ¥669,613</span></div>
+        <div class="traffic-channel"><span>Paid Search / Conv Ads</span><span>13,929 sessions | ¥299,232</span></div>
+        <div class="traffic-channel"><span>Organic Search</span><span>12,832 sessions | ¥156,948</span></div>
+        <div class="traffic-channel"><span>Display / Traffic Ads</span><span>11,818 sessions | $0</span></div>
+        <div class="traffic-channel"><span>Email</span><span>6,653 sessions | ¥85,844</span></div>
+        <div class="traffic-channel"><span>Owned Social</span><span>6,384 sessions | $0</span></div>
+        <div class="traffic-channel" style="font-weight:600;color:var(--accent-blue)"><span>合计</span><span>102,448 sessions | $2,188,702</span></div>
+      </div>
+      <div>
+        <h4 style="font-size:13px;color:var(--eu-color);margin-bottom:12px;">欧洲（1.1-3.31）</h4>
+        <div class="traffic-channel"><span>Official Website</span><span>88,137 sessions | €194,927</span></div>
+        <div class="traffic-channel"><span>Direct</span><span>51,441 sessions | €372,985</span></div>
+        <div class="traffic-channel"><span>Display / Traffic Ads</span><span>26,717 sessions | €63</span></div>
+        <div class="traffic-channel"><span>Owned Social</span><span>18,199 sessions | €49</span></div>
+        <div class="traffic-channel"><span>Email</span><span>14,149 sessions | €32,070</span></div>
+        <div class="traffic-channel"><span>Paid Search / Conv Ads</span><span>12,279 sessions | €196,960</span></div>
+        <div class="traffic-channel"><span>Organic Search</span><span>6,308 sessions | €46,364</span></div>
+        <div class="traffic-channel" style="font-weight:600;color:var(--eu-color)"><span>合计</span><span>228,526 sessions | €1,402,863</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 详细产品销售表格 -->
+  <div class="card">
+    <div class="card-title">Q1 产品明细销售表（Shopify Total Sales）</div>
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="switchProductTable('na')">北美</button>
+      <button class="sub-tab" onclick="switchProductTable('eu')">欧洲</button>
+    </div>
+    <div class="table-scroll" style="max-height:500px;">
+      <table class="data-table" id="productTable">
+        <thead>
+          <tr>
+            <th>产品类型</th>
+            <th>产品名称</th>
+            <th class="text-right">1月 Total Sales</th>
+            <th class="text-right">2月 Total Sales</th>
+            <th class="text-right">3月 Total Sales</th>
+            <th class="text-right">Q1 合计</th>
+            <th class="text-right">占比</th>
+          </tr>
+        </thead>
+        <tbody id="productTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== TAB 2: 全年增长规划 ==================== -->
+<div class="tab-content" id="tab1">
+
+  <!-- 全年目标概览 -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">全年合计目标</div>
+      <div class="kpi-value" style="font-size:22px;">¥176,410,000</div>
+      <div class="kpi-sub">北美 + 欧洲</div>
+    </div>
+    <div class="kpi-card" style="border-left:3px solid var(--na-color);">
+      <div class="kpi-label">北美全年目标</div>
+      <div class="kpi-value" style="font-size:22px;">¥86,310,000</div>
+    </div>
+    <div class="kpi-card" style="border-left:3px solid var(--eu-color);">
+      <div class="kpi-label">欧洲全年目标</div>
+      <div class="kpi-value" style="font-size:22px;">¥90,100,000</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Q1已完成</div>
+      <div class="kpi-value" style="font-size:22px;">¥44,935,428</div>
+      <div class="kpi-sub">剩余 ¥131,474,572</div>
+    </div>
+  </div>
+
+  <!-- 季度目标拆分表 -->
+  <div class="card">
+    <div class="card-title">季度销售目标 & 达成追踪</div>
+    <div class="table-scroll">
+      <table class="q-table">
+        <thead>
+          <tr>
+            <th>区域</th>
+            <th>指标</th>
+            <th class="q-current">Q1 (1-3月)</th>
+            <th>Q2 (4-6月)</th>
+            <th>Q3 (7-8月)</th>
+            <th>Q4 (10-12月)</th>
+            <th>全年</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td rowspan="3" class="region-label" style="color:var(--na-color);">北美</td>
+            <td>目标</td>
+            <td class="text-right q-current">26,612,250</td>
+            <td class="text-right">19,419,750</td>
+            <td class="text-right">17,262,000</td>
+            <td class="text-right">23,016,000</td>
+            <td class="text-right" style="font-weight:700;">86,310,000</td>
+          </tr>
+          <tr>
+            <td>实际</td>
+            <td class="text-right q-current" style="font-weight:600;">27,309,185</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right">27,309,185</td>
+          </tr>
+          <tr>
+            <td>达成率</td>
+            <td class="text-right q-current text-green" style="font-weight:600;">102.62%</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right">31.64%</td>
+          </tr>
+          <tr style="border-top:2px solid var(--border);">
+            <td rowspan="3" class="region-label" style="color:var(--eu-color);">欧洲</td>
+            <td>目标</td>
+            <td class="text-right q-current">27,780,833</td>
+            <td class="text-right">20,272,500</td>
+            <td class="text-right">18,020,001</td>
+            <td class="text-right">24,026,666</td>
+            <td class="text-right" style="font-weight:700;">90,100,000</td>
+          </tr>
+          <tr>
+            <td>实际</td>
+            <td class="text-right q-current" style="font-weight:600;">17,626,243</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right">17,626,243</td>
+          </tr>
+          <tr>
+            <td>达成率</td>
+            <td class="text-right q-current text-red" style="font-weight:600;">63.45%</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right">19.56%</td>
+          </tr>
+          <tr style="border-top:3px solid var(--accent-blue);">
+            <td rowspan="3" class="region-label" style="font-weight:700;">合计</td>
+            <td style="font-weight:600;">目标</td>
+            <td class="text-right q-current" style="font-weight:600;">54,393,083</td>
+            <td class="text-right" style="font-weight:600;">39,692,250</td>
+            <td class="text-right" style="font-weight:600;">35,282,001</td>
+            <td class="text-right" style="font-weight:600;">47,042,666</td>
+            <td class="text-right" style="font-weight:700;">176,410,000</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">实际</td>
+            <td class="text-right q-current" style="font-weight:700;">44,935,428</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right" style="font-weight:600;">44,935,428</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">达成率</td>
+            <td class="text-right q-current badge-amber" style="font-weight:700;">82.61%</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right text-secondary">-</td>
+            <td class="text-right">25.47%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 季度目标柱状图 -->
+  <div class="card">
+    <div class="card-title">季度目标 vs 实际（含预测）</div>
+    <div class="chart-container" style="height:350px;"><canvas id="quarterlyChart"></canvas></div>
+  </div>
+
+  <!-- 五大维度增长规划 (动态渲染) -->
+  <div class="card" id="growthPlanCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+      <div class="card-title" style="font-size:18px;margin-bottom:0;">全年增长策略规划（五大维度 × 四个季度）</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="sub-tabs" style="margin-bottom:0;">
+          <button class="sub-tab active" onclick="switchPlanRegion('NA',this)">北美</button>
+          <button class="sub-tab" onclick="switchPlanRegion('EU',this)">欧洲</button>
+        </div>
+        <button class="ai-btn" onclick="aiGenerateAll()" title="AI 为当前区域生成全部规划">AI 生成全部</button>
+        <button class="export-btn" onclick="exportPlanData()" title="导出规划数据为JSON">导出</button>
+        <button class="import-btn" onclick="document.getElementById('importFile').click()" title="导入规划数据">导入</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importPlanData(event)">
+      </div>
+    </div>
+    <!-- AI 设置面板 -->
+    <div id="aiSettingsPanel" style="display:none;margin-bottom:16px;padding:14px 18px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;">
+      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:4px;">API 地址</label>
+          <input type="text" id="aiApiUrl" placeholder="https://your-api.com/v1/chat/completions" style="width:100%;padding:6px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;">
+        </div>
+        <div style="min-width:140px;">
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:4px;">模型</label>
+          <input type="text" id="aiModel" placeholder="gpt-4o" style="width:100%;padding:6px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;">
+        </div>
+        <div style="min-width:200px;">
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:4px;">API Key</label>
+          <input type="password" id="aiApiKey" placeholder="sk-..." style="width:100%;padding:6px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;">
+        </div>
+        <button class="ai-btn" onclick="saveAiSettings()" style="height:32px;">保存</button>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text-secondary);">设置保存在浏览器本地，不会上传。支持 OpenAI 兼容格式的 API。</div>
+    </div>
+    <div style="margin-bottom:12px;display:flex;gap:8px;">
+      <button class="settings-btn" onclick="toggleAiSettings()">AI 设置</button>
+    </div>
+    <!-- 规划表格容器 -->
+    <div id="planContainer"></div>
+  </div>
+
+  <!-- 编辑弹窗 -->
+  <div id="editModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="width:640px;">
+      <div class="modal-header">
+        <span id="editModalTitle">编辑规划</span>
+        <button class="modal-close" onclick="closeEditModal()">&times;</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;" id="editModalContext"></div>
+      <!-- 工具栏 -->
+      <div class="editor-toolbar">
+        <button class="toolbar-btn" onclick="editorCmd('bold')" title="加粗"><b>B</b></button>
+        <button class="toolbar-btn" onclick="editorCmd('italic')" title="斜体"><i>I</i></button>
+        <button class="toolbar-btn" onclick="editorCmd('underline')" title="下划线"><u>U</u></button>
+        <span class="toolbar-sep"></span>
+        <button class="toolbar-btn highlight-btn" onclick="editorHighlight('#facc15')" title="黄色高亮" style="color:#facc15;">H</button>
+        <button class="toolbar-btn highlight-btn" onclick="editorHighlight('#4ade80')" title="绿色高亮" style="color:#4ade80;">H</button>
+        <button class="toolbar-btn highlight-btn" onclick="editorHighlight('#f87171')" title="红色高亮" style="color:#f87171;">H</button>
+        <button class="toolbar-btn" onclick="editorHighlight('')" title="清除高亮" style="font-size:10px;">清除</button>
+        <span class="toolbar-sep"></span>
+        <button class="toolbar-btn color-swatch" onclick="editorColor('#1e2333')" title="黑色" style="background:#1e2333;"></button>
+        <button class="toolbar-btn color-swatch" onclick="editorColor('#3b82f6')" title="蓝色" style="background:#3b82f6;"></button>
+        <button class="toolbar-btn color-swatch" onclick="editorColor('#10b981')" title="绿色" style="background:#10b981;"></button>
+        <button class="toolbar-btn color-swatch" onclick="editorColor('#f59e0b')" title="橙色" style="background:#f59e0b;"></button>
+        <button class="toolbar-btn color-swatch" onclick="editorColor('#ef4444')" title="红色" style="background:#ef4444;"></button>
+        <button class="toolbar-btn color-swatch" onclick="editorColor('#8b5cf6')" title="紫色" style="background:#8b5cf6;"></button>
+        <span class="toolbar-sep"></span>
+        <button class="toolbar-btn" onclick="editorCmd('insertUnorderedList')" title="列表">&#8226;</button>
+        <button class="toolbar-btn" onclick="editorInsertDivider()" title="插入分隔线" style="font-size:10px;">---</button>
+      </div>
+      <!-- 富文本编辑区 -->
+      <div id="richEditor" class="rich-editor" contenteditable="true"></div>
+      <div class="modal-actions">
+        <button class="ai-btn" onclick="aiGenerateCell()" id="aiCellBtn">AI 生成</button>
+        <div style="flex:1"></div>
+        <button class="cancel-btn" onclick="closeEditModal()">取消</button>
+        <button class="save-btn" onclick="saveEditModal()">保存</button>
+      </div>
+      <div id="aiLoading" style="display:none;text-align:center;padding:12px;color:var(--accent-blue);font-size:13px;">AI 生成中...</div>
+    </div>
+  </div>
+
+  <!-- 欧洲拓展国家明细 -->
+  <div class="card">
+    <div class="card-title">欧洲新国家拓展优先级</div>
+    <table class="expansion-table">
+      <thead>
+        <tr>
+          <th>优先级</th>
+          <th>国家</th>
+          <th>地理分区</th>
+          <th>徕卡</th>
+          <th>富士</th>
+          <th>DJI</th>
+          <th>哈苏线下</th>
+          <th>哈苏商城</th>
+          <th>26年业绩预估</th>
+          <th>商城业绩预估</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="priority-high">最高</td>
+          <td>瑞士</td><td>西欧</td>
+          <td class="text-green">✓</td><td class="text-red">✗</td><td class="text-green">✓</td>
+          <td class="text-green">✓</td><td class="text-red">✗</td>
+          <td class="text-right">2,000万</td><td class="text-right">400万</td>
+        </tr>
+        <tr>
+          <td class="priority-high">最高</td>
+          <td>挪威</td><td>北欧</td>
+          <td class="text-red">✗</td><td class="text-red">✗</td><td class="text-green">✓</td>
+          <td class="text-green">✓</td><td class="text-red">✗</td>
+          <td class="text-right">100万</td><td class="text-right">20万</td>
+        </tr>
+        <tr>
+          <td class="priority-med">高</td>
+          <td>塞尔维亚</td><td>南欧</td>
+          <td class="text-red">✗</td><td class="text-red">✗</td><td class="text-red">✗</td>
+          <td class="text-green">✓</td><td class="text-red">✗</td>
+          <td class="text-right">100万</td><td class="text-right">20万</td>
+        </tr>
+        <tr>
+          <td class="priority-med">高</td>
+          <td>列支敦士登</td><td>西欧</td>
+          <td class="text-red">✗</td><td class="text-red">✗</td><td class="text-green">✓</td>
+          <td class="text-red">✗</td><td class="text-red">✗</td>
+          <td class="text-right">-</td><td class="text-right">-</td>
+        </tr>
+        <tr>
+          <td class="priority-low">中</td>
+          <td>摩纳哥</td><td>西欧</td>
+          <td class="text-red">✗</td><td class="text-red">✗</td><td class="text-green">✓</td>
+          <td class="text-red">✗</td><td class="text-red">✗</td>
+          <td class="text-right">-</td><td class="text-right">-</td>
+        </tr>
+        <tr>
+          <td class="priority-low">中</td>
+          <td>安道尔</td><td>南欧</td>
+          <td class="text-red">✗</td><td class="text-red">✗</td><td class="text-red">✗</td>
+          <td class="text-green">✓</td><td class="text-red">✗</td>
+          <td class="text-right">100万</td><td class="text-right">20万</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 月度目标明细 -->
+  <div class="card">
+    <div class="card-title">月度销售目标明细（BP）</div>
+    <div class="table-scroll">
+      <table class="q-table">
+        <thead>
+          <tr>
+            <th>区域</th>
+            <th class="text-right">1月</th>
+            <th class="text-right">2月</th>
+            <th class="text-right">3月</th>
+            <th class="text-right">4月</th>
+            <th class="text-right">5月</th>
+            <th class="text-right">6月</th>
+            <th class="text-right">7月</th>
+            <th class="text-right">8月</th>
+            <th class="text-right">9月</th>
+            <th class="text-right">10月</th>
+            <th class="text-right">11月</th>
+            <th class="text-right">12月</th>
+            <th class="text-right" style="font-weight:700;">全年</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="region-label" style="color:var(--eu-color);">欧洲</td>
+            <td class="text-right">9,760,833</td>
+            <td class="text-right">9,760,833</td>
+            <td class="text-right">8,259,167</td>
+            <td class="text-right">8,259,167</td>
+            <td class="text-right">6,006,667</td>
+            <td class="text-right">6,006,667</td>
+            <td class="text-right">6,006,667</td>
+            <td class="text-right">6,006,667</td>
+            <td class="text-right">6,006,667</td>
+            <td class="text-right">9,760,833</td>
+            <td class="text-right">7,508,333</td>
+            <td class="text-right">6,757,500</td>
+            <td class="text-right" style="font-weight:700;">90,100,000</td>
+          </tr>
+          <tr>
+            <td class="region-label" style="color:var(--na-color);">北美</td>
+            <td class="text-right">9,350,250</td>
+            <td class="text-right">9,350,250</td>
+            <td class="text-right">7,911,750</td>
+            <td class="text-right">7,911,750</td>
+            <td class="text-right">5,754,000</td>
+            <td class="text-right">5,754,000</td>
+            <td class="text-right">5,754,000</td>
+            <td class="text-right">5,754,000</td>
+            <td class="text-right">5,754,000</td>
+            <td class="text-right">9,350,250</td>
+            <td class="text-right">7,192,500</td>
+            <td class="text-right">6,473,250</td>
+            <td class="text-right" style="font-weight:700;">86,310,000</td>
+          </tr>
+          <tr style="border-top:2px solid var(--accent-blue);">
+            <td class="region-label" style="font-weight:700;">合计</td>
+            <td class="text-right" style="font-weight:600;">19,111,083</td>
+            <td class="text-right" style="font-weight:600;">19,111,083</td>
+            <td class="text-right" style="font-weight:600;">16,170,917</td>
+            <td class="text-right" style="font-weight:600;">16,170,917</td>
+            <td class="text-right" style="font-weight:600;">11,760,667</td>
+            <td class="text-right" style="font-weight:600;">11,760,667</td>
+            <td class="text-right" style="font-weight:600;">11,760,667</td>
+            <td class="text-right" style="font-weight:600;">11,760,667</td>
+            <td class="text-right" style="font-weight:600;">11,760,667</td>
+            <td class="text-right" style="font-weight:600;">19,111,083</td>
+            <td class="text-right" style="font-weight:600;">14,700,833</td>
+            <td class="text-right" style="font-weight:600;">13,230,750</td>
+            <td class="text-right" style="font-weight:700;">176,410,000</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== TAB 3: 任务分工 ==================== -->
+<div class="tab-content" id="tab2">
+
+  <!-- 分工概览 (可编辑) -->
+  <div class="kpi-row" style="grid-template-columns: 1fr 1fr;">
+    <div class="kpi-card role-card" style="border-left:3px solid #2563eb;cursor:pointer;" onclick="openRoleEdit('Zola')">
+      <div class="kpi-label">Zola</div>
+      <div class="kpi-sub" style="margin-top:6px;line-height:1.6;" id="roleDescZola"></div>
+      <div class="role-edit-hint">点击编辑</div>
+    </div>
+    <div class="kpi-card role-card" style="border-left:3px solid #059669;cursor:pointer;" onclick="openRoleEdit('Xiaodu')">
+      <div class="kpi-label">Xiaodu</div>
+      <div class="kpi-sub" style="margin-top:6px;line-height:1.6;" id="roleDescXiaodu"></div>
+      <div class="role-edit-hint">点击编辑</div>
+    </div>
+  </div>
+
+  <!-- 角色编辑弹窗 -->
+  <div id="roleEditModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="width:480px;">
+      <div class="modal-header">
+        <span id="roleEditTitle">编辑职责</span>
+        <button class="modal-close" onclick="document.getElementById('roleEditModal').style.display='none'">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>职责描述</label>
+        <textarea id="roleEditText" rows="4" style="width:100%;padding:8px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;font-family:inherit;resize:vertical;line-height:1.6;" placeholder="用 / 分隔不同职责..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <div style="flex:1"></div>
+        <button class="cancel-btn" onclick="document.getElementById('roleEditModal').style.display='none'">取消</button>
+        <button class="save-btn" onclick="saveRoleEdit()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 季度筛选 -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+      <div class="card-title" style="margin-bottom:0;font-size:18px;">Q2 任务分工 & 优先级</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="sub-tabs" style="margin-bottom:0;">
+          <button class="sub-tab active" onclick="switchTaskOwner('all',this)">全部</button>
+          <button class="sub-tab" onclick="switchTaskOwner('Zola',this)">Zola</button>
+          <button class="sub-tab" onclick="switchTaskOwner('Xiaodu',this)">Xiaodu</button>
+        </div>
+        <div class="sub-tabs" style="margin-bottom:0;">
+          <button class="sub-tab active" onclick="switchTaskDim('all',this)">全维度</button>
+          <button class="sub-tab" onclick="switchTaskDim('流量',this)">流量</button>
+          <button class="sub-tab" onclick="switchTaskDim('页面优化',this)">页面优化</button>
+          <button class="sub-tab" onclick="switchTaskDim('转化',this)">转化</button>
+          <button class="sub-tab" onclick="switchTaskDim('用户运营',this)">用户运营</button>
+          <button class="sub-tab" onclick="switchTaskDim('其他增长',this)">其他增长</button>
+        </div>
+        <button class="export-btn" onclick="addNewTask()" style="background:#eff6ff;color:var(--accent-blue);border-color:#bfdbfe;">+ 新增任务</button>
+        <div style="position:relative;display:inline-block;">
+          <button class="export-btn" onclick="toggleExportMenu()" id="exportMenuBtn">导出 ▾</button>
+          <div id="exportDropdown" class="export-dropdown" style="display:none;">
+            <button onclick="exportTaskExcel()">导出 Excel</button>
+            <button onclick="exportTaskPDF()">导出 PDF</button>
+            <button onclick="exportTaskImage()">导出 图片</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-scroll" style="max-height:none;border:none;">
+      <table class="data-table" id="taskTable">
+        <thead>
+          <tr>
+            <th style="width:50px;">优先级</th>
+            <th>维度</th>
+            <th>主要任务</th>
+            <th>任务描述</th>
+            <th style="width:80px;">负责人</th>
+            <th style="width:80px;">状态</th>
+            <th style="width:60px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="taskTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 任务编辑弹窗 -->
+  <div id="taskEditModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="width:520px;">
+      <div class="modal-header">
+        <span id="taskEditTitle">编辑任务</span>
+        <button class="modal-close" onclick="closeTaskEditModal()">&times;</button>
+      </div>
+      <div class="task-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>维度</label>
+            <select id="taskFormDim">
+              <option>流量</option><option>页面优化</option><option>转化</option><option>用户运营</option><option>其他增长</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>主要任务</label>
+            <input type="text" id="taskFormTask" placeholder="如：转化广告、SEO...">
+          </div>
+          <div class="form-group">
+            <label>负责人</label>
+            <div style="display:flex;gap:12px;padding:8px 0;">
+              <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;font-weight:400;">
+                <input type="checkbox" id="taskFormOwnerZola" value="Zola"> Zola
+              </label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;font-weight:400;">
+                <input type="checkbox" id="taskFormOwnerXiaodu" value="Xiaodu"> Xiaodu
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>任务描述</label>
+          <textarea id="taskFormDesc" rows="4" placeholder="输入任务内容，支持换行..." style="width:100%;padding:8px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;font-family:inherit;resize:vertical;line-height:1.6;"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>优先级</label>
+            <select id="taskFormPriority"><option value="P0">P0 - 最高</option><option value="P1">P1 - 高</option><option value="P2">P2 - 中</option><option value="P3">P3 - 低</option></select>
+          </div>
+          <div class="form-group">
+            <label>状态</label>
+            <select id="taskFormStatus"><option>待启动</option><option>进行中</option><option>已完成</option><option>已搁置</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="cancel-btn" style="color:var(--accent-red);border-color:#fecaca;" onclick="deleteTask()" id="taskDeleteBtn">删除</button>
+        <div style="flex:1"></div>
+        <button class="cancel-btn" onclick="closeTaskEditModal()">取消</button>
+        <button class="save-btn" onclick="saveTask()">保存</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ==================== DATA ====================
+// CSV data parsed: Shopify Total Sales by Store, Month, Product
+const rawData = [
+// [store, month, type, product, totalSales]
+["US","2026-01","CAMERAS","X2D II 100C",5386116.245],
+["US","2026-01","CAMERAS","907X & CFV 100C",332526.887],
+["US","2026-01","LENSES","XCD 2,8-4/35-100E",2209423.313],
+["US","2026-01","LENSES","XCD 2,5/55V",302780.886],
+["US","2026-01","LENSES","XCD 2,5/38V",164105.55],
+["US","2026-01","LENSES","XCD 2,5/25V",133009.995],
+["US","2026-01","LENSES","XCD 3,2-4,5/20-35E",131416.063],
+["US","2026-01","LENSES","XCD 2,5/90V",127870.054],
+["US","2026-01","LENSES","XCD 4/28P",73400.712],
+["US","2026-01","LENSES","XCD 3,4/75P",49909.833],
+["US","2026-01","LENSES","XCD 4/45P",23606.085],
+["US","2026-01","LENSES","XCD 2,8/135 and X Converter 1,7",36136.852],
+["US","2026-01","LENSES","XCD 3,5-4,5/35-75",48.745],
+["US","2026-01","ACCESSORIES","Battery Charging Hub",77313.076],
+["US","2026-01","ACCESSORIES","High Capacity Li-ion Rechargeable Battery (for X System)",54885.955],
+["US","2026-01","ACCESSORIES","XH Converter 0,8",48642.441],
+["US","2026-01","ACCESSORIES","Hasselblad CPL Filters",43735.344],
+["US","2026-01","ACCESSORIES","Hasselblad UV Filters",44393.042],
+["US","2026-01","ACCESSORIES","Extension Tube X 9mm",24367.555],
+["US","2026-01","ACCESSORIES","Release Cord X",18764.573],
+["US","2026-01","ACCESSORIES","907X Control Grip",11106.026],
+["US","2026-01","ACCESSORIES","Vandra Camera Strap",11162.527],
+["US","2026-01","ACCESSORIES","Hasselblad ND Filters",7798.389],
+["US","2026-01","ACCESSORIES","XV Lens Adapter",3754.423],
+["US","2026-01","ACCESSORIES","907X Optical Viewfinder",3825.216],
+["US","2026-01","ACCESSORIES","Vandra Camera Backpack",3492.816],
+["US","2026-01","ACCESSORIES","Hasselblad USB 3.0 Cable Type-C To Type-A/M",683.876],
+["EU","2026-01","CAMERAS","X2D II 100C",787341.436],
+["EU","2026-01","CAMERAS","907X & CFV 100C",240313.926],
+["EU","2026-01","LENSES","XCD 2,8-4/35-100E",624122.067],
+["EU","2026-01","LENSES","XCD 2,5/90V",429895.78],
+["EU","2026-01","LENSES","XCD 3,2-4,5/20-35E",163161.666],
+["EU","2026-01","LENSES","XCD 2,5/25V",138059.962],
+["EU","2026-01","LENSES","XCD 2,5/38V",103129.056],
+["EU","2026-01","LENSES","XCD 3,4/75P",82741.472],
+["EU","2026-01","LENSES","XCD 2,8/135 and X Converter 1,7",79022.714],
+["EU","2026-01","LENSES","XCD 4/28P",78223.782],
+["EU","2026-01","LENSES","XCD 2,5/55V",34413.21],
+["EU","2026-01","LENSES","XCD 4/45P",29238.652],
+["EU","2026-01","LENSES","XCD 2,8/65",22433.365],
+["EU","2026-01","ACCESSORIES","Vandra Camera Backpack",73372.534],
+["EU","2026-01","ACCESSORIES","High Capacity Li-ion Rechargeable Battery (for X System)",57588.24],
+["EU","2026-01","ACCESSORIES","Battery Charging Hub",46900.3],
+["EU","2026-01","ACCESSORIES","Hasselblad UV Filters",39277.516],
+["EU","2026-01","ACCESSORIES","Hasselblad CPL Filters",36942.234],
+["EU","2026-01","ACCESSORIES","907X Control Grip",18674.691],
+["EU","2026-01","ACCESSORIES","Extension Tube X 9mm",19423.681],
+["EU","2026-01","ACCESSORIES","XV Lens Adapter",17691.166],
+["EU","2026-01","ACCESSORIES","Hasselblad ND Filters",10041.641],
+["EU","2026-01","ACCESSORIES","Release Cord X",10246.1],
+["EU","2026-01","ACCESSORIES","Vandra Camera Strap",8205.782],
+["EU","2026-01","ACCESSORIES","907X Optical Viewfinder (for XCD 28P/38V/55V)",4120.831],
+["EU","2026-01","ACCESSORIES","907X Optical Viewfinder",4052.619],
+["EU","2026-01","ACCESSORIES","XPan Lens Adapter",1457.326],
+["EU","2026-01","ACCESSORIES","Tripod Mount Ring 75mm",1274.714],
+["EU","2026-01","ACCESSORIES","Hasselblad USB 3.0 Cable Type-C To Type-A/M",490.776],
+["US","2026-02","CAMERAS","X2D II 100C",2322089.27],
+["US","2026-02","CAMERAS","907X & CFV 100C",531108.58],
+["US","2026-02","LENSES","XCD 2,8-4/35-100E",5364769.212],
+["US","2026-02","LENSES","XCD 3,5-4,5/35-75",353492.582],
+["US","2026-02","LENSES","XCD 2,5/55V",218977.409],
+["US","2026-02","LENSES","XCD 2,5/38V",189280.11],
+["US","2026-02","LENSES","XCD 2,5/25V",110744.084],
+["US","2026-02","LENSES","XCD 3,2-4,5/20-35E",126239.53],
+["US","2026-02","LENSES","XCD 2,5/90V",94688.265],
+["US","2026-02","LENSES","XCD 3,4/75P",65162.311],
+["US","2026-02","LENSES","XCD 4/28P",47026.433],
+["US","2026-02","LENSES","XCD 2,8/65",41272.046],
+["US","2026-02","LENSES","XCD 2,8/135 and X Converter 1,7",36444.91],
+["US","2026-02","LENSES","XCD 4/45P",15733.646],
+["US","2026-02","ACCESSORIES","Hasselblad UV Filters",89853.301],
+["US","2026-02","ACCESSORIES","Hasselblad CPL Filters",73715.941],
+["US","2026-02","ACCESSORIES","Battery Charging Hub",70826.045],
+["US","2026-02","ACCESSORIES","High Capacity Li-ion Rechargeable Battery (for X System)",42590.189],
+["US","2026-02","ACCESSORIES","907X Control Grip",31524.749],
+["US","2026-02","ACCESSORIES","Vandra Camera Backpack",23492.77],
+["US","2026-02","ACCESSORIES","Release Cord X",18512.588],
+["US","2026-02","ACCESSORIES","Hasselblad ND Filters",17033.14],
+["US","2026-02","ACCESSORIES","Extension Tube X 9mm",13220.898],
+["US","2026-02","ACCESSORIES","Vandra Camera Strap",6519.209],
+["US","2026-02","ACCESSORIES","XV Lens Adapter",5504.874],
+["US","2026-02","ACCESSORIES","907X Optical Viewfinder",3704.939],
+["US","2026-02","ACCESSORIES","907X Optical Viewfinder (for XCD 28P/38V/55V)",3449.849],
+["US","2026-02","ACCESSORIES","Tripod Mount Ring 75mm",3191.208],
+["US","2026-02","ACCESSORIES","XPan Lens Adapter",1347.153],
+["US","2026-02","ACCESSORIES","Hasselblad USB 3.0 Cable Type-C To Type-A/M",213.452],
+["US","2026-02","ACCESSORIES","XH Converter 0,8",-2.175],
+["EU","2026-02","CAMERAS","X2D II 100C",5240727.795],
+["EU","2026-02","CAMERAS","907X & CFV 100C",470487.886],
+["EU","2026-02","LENSES","XCD 2,8-4/35-100E",1136179.728],
+["EU","2026-02","LENSES","XCD 3,5-4,5/35-75",373340.951],
+["EU","2026-02","LENSES","XCD 3,2-4,5/20-35E",385428.483],
+["EU","2026-02","LENSES","XCD 2,5/90V",314426.872],
+["EU","2026-02","LENSES","XCD 2,5/55V",240024.727],
+["EU","2026-02","LENSES","XCD 2,5/38V",239269.058],
+["EU","2026-02","LENSES","XCD 2,8/135 and X Converter 1,7",157082.657],
+["EU","2026-02","LENSES","XCD 4/28P",108840.162],
+["EU","2026-02","LENSES","XCD 2,5/25V",68474.091],
+["EU","2026-02","LENSES","XCD 3,4/75P",62310.967],
+["EU","2026-02","LENSES","XCD 4/45P",39178.351],
+["EU","2026-02","LENSES","XCD 2,8/65",23618.16],
+["EU","2026-02","ACCESSORIES","Hasselblad UV Filters",87595.479],
+["EU","2026-02","ACCESSORIES","Hasselblad CPL Filters",71710.285],
+["EU","2026-02","ACCESSORIES","Extension Tube X 9mm",69160.899],
+["EU","2026-02","ACCESSORIES","Battery Charging Hub",66214.818],
+["EU","2026-02","ACCESSORIES","High Capacity Li-ion Rechargeable Battery (for X System)",64027.046],
+["EU","2026-02","ACCESSORIES","Vandra Camera Backpack",48944.03],
+["EU","2026-02","ACCESSORIES","907X Control Grip",43261.571],
+["EU","2026-02","ACCESSORIES","Hasselblad ND Filters",21931.247],
+["EU","2026-02","ACCESSORIES","Vandra Camera Strap",16415.798],
+["EU","2026-02","ACCESSORIES","Release Cord X",15080.644],
+["EU","2026-02","ACCESSORIES","XV Lens Adapter",13857.045],
+["EU","2026-02","ACCESSORIES","907X Optical Viewfinder (for XCD 28P/38V/55V)",8154.657],
+["EU","2026-02","ACCESSORIES","XH Converter 0,8",7773.154],
+["EU","2026-02","ACCESSORIES","Hasselblad USB 3.0 Cable Type-C To Type-A/M",1230.174],
+["EU","2026-02","ACCESSORIES","Tripod Mount Ring 75mm",1271.897],
+["US","2026-03","CAMERAS","X2D II 100C",4297823.697],
+["US","2026-03","CAMERAS","907X & CFV 100C",579527.995],
+["US","2026-03","LENSES","XCD 2,8-4/35-100E",1460091.592],
+["US","2026-03","LENSES","XCD 2,5/55V",373287.816],
+["US","2026-03","LENSES","XCD 2,5/90V",315122.489],
+["US","2026-03","LENSES","XCD 3,5-4,5/35-75",155946.006],
+["US","2026-03","LENSES","XCD 2,5/38V",184789.279],
+["US","2026-03","LENSES","XCD 4/28P",169374.905],
+["US","2026-03","LENSES","XCD 3,4/75P",84128.814],
+["US","2026-03","LENSES","XCD 2,8/135 and X Converter 1,7",66291.156],
+["US","2026-03","LENSES","XCD 4/45P",15693.36],
+["US","2026-03","ACCESSORIES","High Capacity Li-ion Rechargeable Battery (for X System)",54156.771],
+["US","2026-03","ACCESSORIES","Battery Charging Hub",58145.58],
+["US","2026-03","ACCESSORIES","Hasselblad UV Filters",48516.518],
+["US","2026-03","ACCESSORIES","Extension Tube X 9mm",36641.849],
+["US","2026-03","ACCESSORIES","Vandra Camera Backpack",34193.827],
+["US","2026-03","ACCESSORIES","907X Control Grip",26664.367],
+["US","2026-03","ACCESSORIES","Hasselblad CPL Filters",24106.077],
+["US","2026-03","ACCESSORIES","XH Converter 0,8",20830.024],
+["US","2026-03","ACCESSORIES","Release Cord X",15011.944],
+["US","2026-03","ACCESSORIES","XV Lens Adapter",10922.425],
+["US","2026-03","ACCESSORIES","Vandra Camera Strap",10775.46],
+["US","2026-03","ACCESSORIES","907X Optical Viewfinder (for XCD 28P/38V/55V)",6887.77],
+["US","2026-03","ACCESSORIES","Hasselblad ND Filters",6089.553],
+["US","2026-03","ACCESSORIES","907X Optical Viewfinder",3665.522],
+["US","2026-03","ACCESSORIES","Tripod Mount Ring 75mm",2189.252],
+["US","2026-03","ACCESSORIES","XPan Lens Adapter",1342.209],
+["US","2026-03","ACCESSORIES","Lens Shade XCD 120mm",965.656],
+["EU","2026-03","CAMERAS","X2D II 100C",1776273.807],
+["EU","2026-03","CAMERAS","907X & CFV 100C",342683.66],
+["EU","2026-03","LENSES","XCD 2,8-4/35-100E",1109391.553],
+["EU","2026-03","LENSES","XCD 3,2-4,5/20-35E",321491.458],
+["EU","2026-03","LENSES","XCD 2,5/90V",267669.758],
+["EU","2026-03","LENSES","XCD 2,5/38V",233634.957],
+["EU","2026-03","LENSES","XCD 2,5/55V",133991.615],
+["EU","2026-03","LENSES","XCD 2,5/25V",100730.816],
+["EU","2026-03","LENSES","XCD 3,5-4,5/35-75",91334.687],
+["EU","2026-03","LENSES","XCD 4/28P",75713.895],
+["EU","2026-03","LENSES","XCD 2,8/135 and X Converter 1,7",75821.545],
+["EU","2026-03","LENSES","XCD 3,4/75P",60509.642],
+["EU","2026-03","LENSES","XCD 4/45P",19144.969],
+["EU","2026-03","ACCESSORIES","Hasselblad UV Filters",54590.095],
+["EU","2026-03","ACCESSORIES","Hasselblad CPL Filters",63677.74],
+["EU","2026-03","ACCESSORIES","Battery Charging Hub",55705.853],
+["EU","2026-03","ACCESSORIES","Extension Tube X 9mm",53997.008],
+["EU","2026-03","ACCESSORIES","Vandra Camera Backpack",47736.806],
+["EU","2026-03","ACCESSORIES","907X Control Grip",41869.77],
+["EU","2026-03","ACCESSORIES","High Capacity Li-ion Rechargeable Battery (for X System)",41764.051],
+["EU","2026-03","ACCESSORIES","XH Converter 0,8",23354.047],
+["EU","2026-03","ACCESSORIES","XV Lens Adapter",20987.027],
+["EU","2026-03","ACCESSORIES","Release Cord X",17397.088],
+["EU","2026-03","ACCESSORIES","Hasselblad ND Filters",15880.594],
+["EU","2026-03","ACCESSORIES","Vandra Camera Strap",12069.795],
+["EU","2026-03","ACCESSORIES","907X Optical Viewfinder",7921.429],
+["EU","2026-03","ACCESSORIES","Tripod Mount Ring 75mm",2473.628],
+["EU","2026-03","ACCESSORIES","Release Cord H",553.225],
+["EU","2026-03","ACCESSORIES","Lens Shade XCD 120mm",-3.652],
+];
+
+// Process data
+function processData() {
+  const result = { US: {}, EU: {} };
+  const months = ['2026-01','2026-02','2026-03'];
+  
+  for (const [store, month, type, product, net] of rawData) {
+    const region = store;
+    if (!result[region][product]) {
+      result[region][product] = { type, months: {} };
+    }
+    result[region][product].months[month] = (result[region][product].months[month] || 0) + net;
+  }
+  return result;
+}
+
+function getRegionMonthlyTotals(region) {
+  const totals = { '2026-01': 0, '2026-02': 0, '2026-03': 0 };
+  for (const [store, month, , , net] of rawData) {
+    if (store === region) {
+      totals[month] = (totals[month] || 0) + net;
+    }
+  }
+  return totals;
+}
+
+function getTypeTotals(region) {
+  const totals = {};
+  for (const [store, , type, , net] of rawData) {
+    if (store === region) {
+      totals[type] = (totals[type] || 0) + net;
+    }
+  }
+  return totals;
+}
+
+// Monthly targets
+const targets = {
+  EU: {
+    '2026-01': 9760833.33, '2026-02': 9760833.33, '2026-03': 8259166.67,
+    '2026-04': 8259166.67, '2026-05': 6006666.67, '2026-06': 6006666.67,
+    '2026-07': 6006666.67, '2026-08': 6006666.67, '2026-09': 6006666.67,
+    '2026-10': 9760833.33, '2026-11': 7508333.33, '2026-12': 6757500.00
+  },
+  US: {
+    '2026-01': 9350250, '2026-02': 9350250, '2026-03': 7911750,
+    '2026-04': 7911750, '2026-05': 5754000, '2026-06': 5754000,
+    '2026-07': 5754000, '2026-08': 5754000, '2026-09': 5754000,
+    '2026-10': 9350250, '2026-11': 7192500, '2026-12': 6473250
+  }
+};
+
+// ==================== TABS ====================
+function switchTab(idx) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', i === idx);
+  });
+  document.querySelectorAll('.tab-content').forEach((t,i) => {
+    t.classList.toggle('active', i === idx);
+  });
+}
+
+// ==================== CHARTS ====================
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { labels: { color: '#6b7280', font: { size: 11 } } },
+    tooltip: {
+      callbacks: {
+        label: ctx => {
+          const v = ctx.parsed.y || ctx.parsed;
+          return ctx.dataset.label + ': ¥' + Math.round(v).toLocaleString();
+        }
+      }
+    }
+  },
+  scales: {
+    x: { ticks: { color: '#6b7280' }, grid: { color: '#e5e7eb' } },
+    y: { ticks: { color: '#6b7280', callback: v => '¥' + (v/1e6).toFixed(1) + 'M' }, grid: { color: '#e5e7eb' } }
+  }
+};
+
+// NA Monthly
+const naMonthly = getRegionMonthlyTotals('US');
+new Chart(document.getElementById('naMonthlyChart'), {
+  type: 'bar',
+  data: {
+    labels: ['1月', '2月', '3月'],
+    datasets: [
+      {
+        label: '实际销售',
+        data: [naMonthly['2026-01'], naMonthly['2026-02'], naMonthly['2026-03']],
+        backgroundColor: 'rgba(59,130,246,0.7)',
+        borderRadius: 4,
+      },
+      {
+        label: '目标',
+        data: [targets.US['2026-01'], targets.US['2026-02'], targets.US['2026-03']],
+        backgroundColor: 'rgba(107,114,128,0.3)',
+        borderColor: 'rgba(107,114,128,0.6)',
+        borderWidth: 1,
+        borderRadius: 4,
+      }
+    ]
+  },
+  options: { ...chartDefaults }
+});
+
+// EU Monthly
+const euMonthly = getRegionMonthlyTotals('EU');
+new Chart(document.getElementById('euMonthlyChart'), {
+  type: 'bar',
+  data: {
+    labels: ['1月', '2月', '3月'],
+    datasets: [
+      {
+        label: '实际销售',
+        data: [euMonthly['2026-01'], euMonthly['2026-02'], euMonthly['2026-03']],
+        backgroundColor: 'rgba(139,92,246,0.7)',
+        borderRadius: 4,
+      },
+      {
+        label: '目标',
+        data: [targets.EU['2026-01'], targets.EU['2026-02'], targets.EU['2026-03']],
+        backgroundColor: 'rgba(107,114,128,0.3)',
+        borderColor: 'rgba(107,114,128,0.6)',
+        borderWidth: 1,
+        borderRadius: 4,
+      }
+    ]
+  },
+  options: { ...chartDefaults }
+});
+
+// Product type charts
+function createPieChart(canvasId, data, colors) {
+  const labels = Object.keys(data);
+  const values = Object.values(data);
+  new Chart(document.getElementById(canvasId), {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#6b7280', font: { size: 11 }, padding: 12 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+              const pct = ((ctx.parsed / total)*100).toFixed(1);
+              return ctx.label + ': ¥' + Math.round(ctx.parsed).toLocaleString() + ' (' + pct + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+createPieChart('naProductTypeChart', getTypeTotals('US'), ['#3b82f6','#10b981','#f59e0b']);
+createPieChart('euProductTypeChart', getTypeTotals('EU'), ['#8b5cf6','#06b6d4','#ec4899']);
+
+// Quarterly chart
+const qTargets = {
+  US: {
+    Q1: targets.US['2026-01']+targets.US['2026-02']+targets.US['2026-03'],
+    Q2: targets.US['2026-04']+targets.US['2026-05']+targets.US['2026-06'],
+    Q3: targets.US['2026-07']+targets.US['2026-08']+targets.US['2026-09'],
+    Q4: targets.US['2026-10']+targets.US['2026-11']+targets.US['2026-12'],
+  },
+  EU: {
+    Q1: targets.EU['2026-01']+targets.EU['2026-02']+targets.EU['2026-03'],
+    Q2: targets.EU['2026-04']+targets.EU['2026-05']+targets.EU['2026-06'],
+    Q3: targets.EU['2026-07']+targets.EU['2026-08']+targets.EU['2026-09'],
+    Q4: targets.EU['2026-10']+targets.EU['2026-11']+targets.EU['2026-12'],
+  }
+};
+
+const naQ1Actual = Object.values(naMonthly).reduce((a,b)=>a+b,0);
+const euQ1Actual = Object.values(euMonthly).reduce((a,b)=>a+b,0);
+
+new Chart(document.getElementById('quarterlyChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+    datasets: [
+      {
+        label: '北美 目标',
+        data: [qTargets.US.Q1, qTargets.US.Q2, qTargets.US.Q3, qTargets.US.Q4],
+        backgroundColor: 'rgba(59,130,246,0.2)',
+        borderColor: 'rgba(59,130,246,0.6)',
+        borderWidth: 1,
+        borderRadius: 4,
+      },
+      {
+        label: '北美 实际',
+        data: [naQ1Actual, null, null, null],
+        backgroundColor: 'rgba(59,130,246,0.8)',
+        borderRadius: 4,
+      },
+      {
+        label: '欧洲 目标',
+        data: [qTargets.EU.Q1, qTargets.EU.Q2, qTargets.EU.Q3, qTargets.EU.Q4],
+        backgroundColor: 'rgba(139,92,246,0.2)',
+        borderColor: 'rgba(139,92,246,0.6)',
+        borderWidth: 1,
+        borderRadius: 4,
+      },
+      {
+        label: '欧洲 实际',
+        data: [euQ1Actual, null, null, null],
+        backgroundColor: 'rgba(139,92,246,0.8)',
+        borderRadius: 4,
+      },
+    ]
+  },
+  options: {
+    ...chartDefaults,
+    plugins: {
+      ...chartDefaults.plugins,
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            if (ctx.parsed.y === null) return '';
+            return ctx.dataset.label + ': ¥' + Math.round(ctx.parsed.y).toLocaleString();
+          }
+        }
+      }
+    }
+  }
+});
+
+// ==================== PRODUCT TABLE ====================
+let currentRegion = 'na';
+
+function switchProductTable(region) {
+  currentRegion = region;
+  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  renderProductTable();
+}
+
+// ==================== GROWTH PLAN ENGINE ====================
+
+const DIMENSIONS = [
+  { id: 'traffic', icon: '📡', name: '一、流量（广告 + SEO）' },
+  { id: 'page', icon: '🖥️', name: '二、页面优化' },
+  { id: 'conversion', icon: '💰', name: '三、转化提升' },
+  { id: 'user_ops', icon: '👥', name: '四、用户运营（EDM + 会员）' },
+  { id: 'expansion', icon: '🌍', name: '五、其他收入增长（市场拓展）' },
+];
+const QUARTERS = ['Q1','Q2','Q3','Q4'];
+const Q_LABELS = ['Q1（已完成）','Q2（4-6月）','Q3（7-9月）','Q4（10-12月）'];
+
+// Default plan data
+const DEFAULT_PLAN = {
+  NA: {
+    traffic: {
+      Q1:['Google Ads 转化广告持续运行，ROI 33.2，费比0.8%','Demand Gen 广告测试中','MKT侧 Display广告引流','ROI Top3: US 40.54'],
+      Q2:['Meta广告测试开启：订阅留邮 + 转化','Demand Gen广告优化放量','向MKT提出进站流量诉求，配合RMKT','转化广告在费比0.9%&ROI 20目标内拓量','SEO服务商触达&签约'],
+      Q3:['Meta广告常态化投放','SEO策略落地执行','Blog文章定期输出（内部）','MKT配合新品/节点的集中引流','拓展Pinterest/YouTube等渠道测试'],
+      Q4:['黑五/节日季广告加码','全渠道协同引流：Google+Meta+SEO','MKT侧配合节日大促引流','复盘全年广告效率，优化预算分配'],
+    },
+    page: {
+      Q1:['活动落地页开发中','基础页面维护'],
+      Q2:['4月春季活动落地页上线','PDP页面优化：增强产品展示和用户信任感','落地页AB测试框架搭建','页面加载速度优化'],
+      Q3:['Blog页面开发上线','视频教程页面开发','产品对比页面（辅助用户决策）','用户评价/UGC展示模块'],
+      Q4:['节日专题页面','礼品指南页面','年度页面表现复盘与迭代'],
+    },
+    conversion: {
+      Q1:['基础转化链路运行','紧缺品自然转化为主'],
+      Q2:['申请分期免息（Affirm）','多样化物流方式上线','结账流程优化（减少弃单）','Cart abandonment邮件优化'],
+      Q3:['分期免息效果评估与优化','Checkout页面AB测试','跨售/追加销售模块上线','Trust badges和社交证明优化'],
+      Q4:['节日促销机制（Bundle/Gift）','限时优惠&紧迫感营造','全年转化率复盘'],
+    },
+    user_ops: {
+      Q1:['基础EDM流程运行','订阅用户积累'],
+      Q2:['拉新：Meta订阅留邮测试','EDM Campaign邮件频率优化（每月2-3次）','Flow邮件优化：Welcome / Browse Abandon / Cart Abandon','用户分层和打标规则设计','会员体系方案设计'],
+      Q3:['会员体系上线（积分/等级/权益）','用户中心集成（订单/积分/收藏）','EDM内容矩阵：产品教程/摄影师故事/新品预告','Post-purchase flow上线','Winback flow上线'],
+      Q4:['VIP用户专享活动','节日专属EDM系列','年度用户数据复盘','RFM模型精细化运营'],
+    },
+    expansion: {
+      Q1:['北美市场稳固运营'],
+      Q2:['北美市场持续优化'],
+      Q3:['评估北美周边市场（加拿大）可行性'],
+      Q4:['北美全年效果复盘','27年北美策略规划'],
+    },
+  },
+  EU: {
+    traffic: {
+      Q1:['Google Ads 转化广告持续运行','Demand Gen 广告测试中','MKT侧 Display广告引流','ROI Top3: DE 26.08, UK 11.07'],
+      Q2:['Meta广告测试开启：订阅留邮 + 转化','Demand Gen广告优化放量','向MKT提出进站流量诉求，配合RMKT','转化广告在费比0.9%&ROI 20目标内拓量','SEO服务商触达&签约'],
+      Q3:['Meta广告常态化投放','SEO策略落地执行','Blog文章定期输出（内部）','MKT配合新品/节点的集中引流','拓展Pinterest/YouTube等渠道测试'],
+      Q4:['黑五/节日季广告加码','全渠道协同引流：Google+Meta+SEO','MKT侧配合节日大促引流','复盘全年广告效率，优化预算分配'],
+    },
+    page: {
+      Q1:['活动落地页开发中','基础页面维护'],
+      Q2:['4月春季活动落地页上线（紧缺品放货噱头，但欧洲X2D2紧缺已缓解，预期一般）','PDP页面优化：增强产品展示和用户信任感','落地页AB测试框架搭建','页面加载速度优化'],
+      Q3:['Blog页面开发上线','视频教程页面开发','产品对比页面（辅助用户决策）','用户评价/UGC展示模块'],
+      Q4:['节日专题页面','礼品指南页面','年度页面表现复盘与迭代'],
+    },
+    conversion: {
+      Q1:['基础转化链路运行','紧缺品自然转化为主（分货严重不足）'],
+      Q2:['申请分期免息（Klarna）','多样化物流方式上线','结账流程优化（减少弃单）','Cart abandonment邮件优化'],
+      Q3:['分期免息效果评估与优化','Checkout页面AB测试','跨售/追加销售模块上线','Trust badges和社交证明优化'],
+      Q4:['节日促销机制（Bundle/Gift）','限时优惠&紧迫感营造','全年转化率复盘'],
+    },
+    user_ops: {
+      Q1:['基础EDM流程运行','订阅用户积累'],
+      Q2:['拉新：Meta订阅留邮测试','EDM Campaign邮件频率优化（每月2-3次）','Flow邮件优化：Welcome / Browse Abandon / Cart Abandon','用户分层和打标规则设计','会员体系方案设计'],
+      Q3:['会员体系上线（积分/等级/权益）','用户中心集成（订单/积分/收藏）','EDM内容矩阵：产品教程/摄影师故事/新品预告','Post-purchase flow上线','Winback flow上线'],
+      Q4:['VIP用户专享活动','节日专属EDM系列','年度用户数据复盘','RFM模型精细化运营'],
+    },
+    expansion: {
+      Q1:['竞品/线下覆盖国家调研'],
+      Q2:['瑞士站上线（优先级最高，预估业绩2000万/年，商城400万）','挪威站上线（预估100万/年，商城20万）','物流&支付方案对接'],
+      Q3:['塞尔维亚站上线（预估100万/年）','安道尔站上线（预估100万/年）','已上线国家运营优化'],
+      Q4:['列支敦士登站评估上线','摩纳哥站评估上线','新国家全年效果复盘','27年拓展计划制定'],
+    },
+  }
+};
+
+let currentPlanRegion = 'NA';
+let planData = {};
+let editingCell = null; // {region, dim, quarter}
+
+function loadPlanData() {
+  const saved = localStorage.getItem('hasselblad_growth_plan');
+  if (saved) {
+    try { planData = JSON.parse(saved); return; } catch(e) {}
+  }
+  planData = JSON.parse(JSON.stringify(DEFAULT_PLAN));
+}
+
+function savePlanData() {
+  localStorage.setItem('hasselblad_growth_plan', JSON.stringify(planData));
+}
+
+function switchPlanRegion(region, btn) {
+  currentPlanRegion = region;
+  document.querySelectorAll('#growthPlanCard .sub-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderPlan();
+}
+
+function renderPlan() {
+  const container = document.getElementById('planContainer');
+  const regionData = planData[currentPlanRegion] || {};
+  const regionLabel = currentPlanRegion === 'NA' ? '北美' : '欧洲';
+  let html = '';
+
+  for (const dim of DIMENSIONS) {
+    const dimData = regionData[dim.id] || {};
+    html += `<div class="plan-grid" style="margin-top:16px;">`;
+    html += `<div class="plan-dim-header"><span style="font-size:18px;">${dim.icon}</span> ${dim.name} <span style="font-size:11px;color:var(--text-secondary);margin-left:8px;">[${regionLabel}]</span></div>`;
+    for (const ql of Q_LABELS) {
+      html += `<div class="plan-header">${ql}</div>`;
+    }
+    for (let qi = 0; qi < 4; qi++) {
+      const q = QUARTERS[qi];
+      const cellRaw = dimData[q];
+      // Support both legacy array and new {__html, items} format
+      let items = [];
+      let richHtml = '';
+      if (cellRaw && cellRaw.__html) {
+        items = cellRaw.items || [];
+        richHtml = cellRaw.__html;
+      } else if (Array.isArray(cellRaw)) {
+        items = cellRaw;
+      }
+      const cellId = `cell_${currentPlanRegion}_${dim.id}_${q}`;
+      if (items.length === 0 && !richHtml) {
+        html += `<div class="plan-cell-wrap empty-cell" id="${cellId}" onclick="openEditModal('${currentPlanRegion}','${dim.id}','${q}')">
+          <div class="cell-actions">
+            <button class="cell-btn ai-cell-btn" onclick="event.stopPropagation();openEditModalAI('${currentPlanRegion}','${dim.id}','${q}')" title="AI生成">&#10022;</button>
+          </div>
+          点击添加</div>`;
+      } else if (richHtml) {
+        // Render rich HTML content directly in cell
+        html += `<div class="plan-cell-wrap plan-cell-rich" id="${cellId}" onclick="openEditModal('${currentPlanRegion}','${dim.id}','${q}')">
+          <div class="cell-actions">
+            <button class="cell-btn" onclick="event.stopPropagation();openEditModal('${currentPlanRegion}','${dim.id}','${q}')" title="编辑">&#9998;</button>
+            <button class="cell-btn ai-cell-btn" onclick="event.stopPropagation();openEditModalAI('${currentPlanRegion}','${dim.id}','${q}')" title="AI生成">&#10022;</button>
+          </div>
+          <div class="cell-rich-content">${richHtml}</div></div>`;
+      } else {
+        html += `<div class="plan-cell-wrap" id="${cellId}" onclick="openEditModal('${currentPlanRegion}','${dim.id}','${q}')">
+          <div class="cell-actions">
+            <button class="cell-btn" onclick="event.stopPropagation();openEditModal('${currentPlanRegion}','${dim.id}','${q}')" title="编辑">&#9998;</button>
+            <button class="cell-btn ai-cell-btn" onclick="event.stopPropagation();openEditModalAI('${currentPlanRegion}','${dim.id}','${q}')" title="AI生成">&#10022;</button>
+          </div>
+          <ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
+      }
+    }
+    html += `</div>`;
+  }
+  container.innerHTML = html;
+}
+
+// ==================== EDIT MODAL (Rich Editor) ====================
+function openEditModal(region, dimId, quarter) {
+  editingCell = { region, dim: dimId, quarter };
+  const dim = DIMENSIONS.find(d => d.id === dimId);
+  const regionLabel = region === 'NA' ? '北美' : '欧洲';
+  document.getElementById('editModalTitle').textContent = `编辑 - ${dim.name}`;
+  document.getElementById('editModalContext').textContent = `区域：${regionLabel} | 季度：${quarter}`;
+  
+  const cellData = planData[region]?.[dimId]?.[quarter];
+  const editor = document.getElementById('richEditor');
+  
+  if (cellData && typeof cellData === 'object' && cellData.__html) {
+    // Rich content stored as HTML
+    editor.innerHTML = cellData.__html;
+  } else if (Array.isArray(cellData) && cellData.length > 0) {
+    // Legacy plain text array -> convert to HTML lines
+    editor.innerHTML = cellData.map(item => `<div>${escapeHtml(item)}</div>`).join('');
+  } else {
+    editor.innerHTML = '';
+  }
+  
+  document.getElementById('aiLoading').style.display = 'none';
+  document.getElementById('editModal').style.display = 'flex';
+  setTimeout(() => editor.focus(), 50);
+}
+
+function escapeHtml(text) {
+  const d = document.createElement('div');
+  d.textContent = text;
+  return d.innerHTML;
+}
+
+function openEditModalAI(region, dimId, quarter) {
+  openEditModal(region, dimId, quarter);
+  aiGenerateCell();
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+  editingCell = null;
+}
+
+function saveEditModal() {
+  if (!editingCell) return;
+  const editor = document.getElementById('richEditor');
+  const html = editor.innerHTML.trim();
+  
+  // Extract plain text lines for display in plan grid
+  const plainItems = extractPlainItems(editor);
+  // Store both HTML (for editor) and plain items (for grid display)
+  const cellData = { __html: html, items: plainItems };
+  
+  if (!planData[editingCell.region]) planData[editingCell.region] = {};
+  if (!planData[editingCell.region][editingCell.dim]) planData[editingCell.region][editingCell.dim] = {};
+  planData[editingCell.region][editingCell.dim][editingCell.quarter] = cellData;
+  savePlanData();
+  renderPlan();
+  closeEditModal();
+}
+
+function extractPlainItems(editor) {
+  // Get text content, split by newlines, filter empty
+  const text = editor.innerText || editor.textContent || '';
+  return text.split('\n').map(l => l.trim()).filter(l => l && l !== '---');
+}
+
+// ==================== RICH EDITOR COMMANDS ====================
+function editorCmd(cmd) {
+  document.execCommand(cmd, false, null);
+  document.getElementById('richEditor').focus();
+}
+
+function editorHighlight(color) {
+  if (color) {
+    document.execCommand('hiliteColor', false, color);
+  } else {
+    document.execCommand('hiliteColor', false, 'transparent');
+  }
+  document.getElementById('richEditor').focus();
+}
+
+function editorColor(color) {
+  document.execCommand('foreColor', false, color);
+  document.getElementById('richEditor').focus();
+}
+
+function editorInsertDivider() {
+  document.execCommand('insertHTML', false, '<hr>');
+  document.getElementById('richEditor').focus();
+}
+
+// ==================== AI INTEGRATION ====================
+const AI_DEFAULTS = {
+  url: 'https://ai.djicorp.com/ai/new-api/v1/chat/completions',
+  model: 'claude-sonnet-4-6',
+  key: 'sk-kLOy4OUEMnUnhu5T3p9qRouR04YEq3U9J4Cov8iN4Dqep2cx',
+};
+
+// Auto-save defaults on first load
+if (!localStorage.getItem('hasselblad_ai_settings')) {
+  localStorage.setItem('hasselblad_ai_settings', JSON.stringify(AI_DEFAULTS));
+}
+
+function toggleAiSettings() {
+  const panel = document.getElementById('aiSettingsPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  const settings = JSON.parse(localStorage.getItem('hasselblad_ai_settings') || JSON.stringify(AI_DEFAULTS));
+  document.getElementById('aiApiUrl').value = settings.url || AI_DEFAULTS.url;
+  document.getElementById('aiModel').value = settings.model || AI_DEFAULTS.model;
+  document.getElementById('aiApiKey').value = settings.key || AI_DEFAULTS.key;
+}
+
+function saveAiSettings() {
+  const settings = {
+    url: document.getElementById('aiApiUrl').value.trim(),
+    model: document.getElementById('aiModel').value.trim(),
+    key: document.getElementById('aiApiKey').value.trim(),
+  };
+  localStorage.setItem('hasselblad_ai_settings', JSON.stringify(settings));
+  document.getElementById('aiSettingsPanel').style.display = 'none';
+  alert('AI 设置已保存');
+}
+
+function getAiSettings() {
+  return JSON.parse(localStorage.getItem('hasselblad_ai_settings') || '{}');
+}
+
+function buildPrompt(region, dimId, quarter) {
+  const dim = DIMENSIONS.find(d => d.id === dimId);
+  const regionLabel = region === 'NA' ? '北美' : '欧洲';
+  const existing = (planData[region]?.[dimId]?.[quarter]) || [];
+  const otherRegion = region === 'NA' ? 'EU' : 'NA';
+  const otherItems = (planData[otherRegion]?.[dimId]?.[quarter]) || [];
+
+  let context = `你是哈苏（Hasselblad）电商运营专家。请为哈苏${regionLabel}商城生成"${dim.name}"维度在${quarter}（2026年）的运营规划。
+
+背景信息：
+- 哈苏是高端中画幅相机品牌，主要产品包括 X2D II 100C、907X & CFV 100C 等相机，XCD系列镜头和各类配件
+- 北美2026年销售目标：8631万人民币，欧洲目标：9010万人民币
+- Q1表现：北美达成率102.62%（超额完成），欧洲达成率仅63.45%（严重不达标，主要因X2D II 100C和XCD 2,8-4/35-100E分货不足）
+- Q1广告数据：Google Ads费比0.8%，ROI 33.2，广告花费$47.6K，转化$1.58M
+- 从4月起X2D II 100C供应缓解，需要主动运营拉动销量
+- 目前正在做 Demand Gen 广告测试，计划打开 Meta 广告`;
+
+  if (otherItems.length > 0) {
+    const otherLabel = region === 'NA' ? '欧洲' : '北美';
+    context += `\n\n${otherLabel}同期规划参考：\n${otherItems.map(i => '- ' + i).join('\n')}`;
+  }
+  if (existing.length > 0) {
+    context += `\n\n当前已有内容（可优化或扩展）：\n${existing.map(i => '- ' + i).join('\n')}`;
+  }
+
+  context += `\n\n请输出4-6条具体的、可执行的规划项，每条一行，不要编号，不要标点符号列表前缀。要求具体、可执行、有针对性，体现${regionLabel}市场特点。`;
+  return context;
+}
+
+async function aiGenerateCell() {
+  if (!editingCell) return;
+  const settings = getAiSettings();
+  if (!settings.url || !settings.key) {
+    alert('请先配置 AI 设置（API地址和Key）');
+    toggleAiSettings();
+    return;
+  }
+
+  const loading = document.getElementById('aiLoading');
+  const editor = document.getElementById('richEditor');
+  const btn = document.getElementById('aiCellBtn');
+  loading.style.display = 'block';
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+
+  const prompt = buildPrompt(editingCell.region, editingCell.dim, editingCell.quarter);
+
+  try {
+    const resp = await fetch(settings.url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${settings.key}`,
+      },
+      body: JSON.stringify({
+        model: settings.model || 'gpt-4o',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 800,
+      }),
+    });
+    const data = await resp.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    const lines = content.split('\n').map(l => l.replace(/^[-•*\d.)\s]+/, '').trim()).filter(l => l);
+    editor.innerHTML = lines.map(l => `<div>${escapeHtml(l)}</div>`).join('');
+  } catch (e) {
+    alert('AI 调用失败：' + e.message);
+  } finally {
+    loading.style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = 'AI 生成';
+  }
+}
+
+async function aiGenerateAll() {
+  const settings = getAiSettings();
+  if (!settings.url || !settings.key) {
+    alert('请先配置 AI 设置（API地址和Key）');
+    toggleAiSettings();
+    return;
+  }
+  const regionLabel = currentPlanRegion === 'NA' ? '北美' : '欧洲';
+  if (!confirm(`将为 ${regionLabel} 所有维度和季度调用 AI 生成内容（共20个单元格）。\n\n已有内容会被覆盖，确认继续？`)) return;
+
+  for (const dim of DIMENSIONS) {
+    for (const q of QUARTERS) {
+      editingCell = { region: currentPlanRegion, dim: dim.id, quarter: q };
+      const prompt = buildPrompt(currentPlanRegion, dim.id, q);
+      try {
+        const resp = await fetch(settings.url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${settings.key}`,
+          },
+          body: JSON.stringify({
+            model: settings.model || 'gpt-4o',
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.7,
+            max_tokens: 800,
+          }),
+        });
+        const data = await resp.json();
+        const content = data.choices?.[0]?.message?.content || '';
+        const lines = content.split('\n').map(l => l.replace(/^[-•*\d.)\s]+/, '').trim()).filter(l => l);
+        if (!planData[currentPlanRegion]) planData[currentPlanRegion] = {};
+        if (!planData[currentPlanRegion][dim.id]) planData[currentPlanRegion][dim.id] = {};
+        planData[currentPlanRegion][dim.id][q] = lines;
+        savePlanData();
+        renderPlan();
+      } catch(e) {
+        alert(`AI生成失败 (${dim.name} ${q}): ${e.message}`);
+        break;
+      }
+    }
+  }
+  editingCell = null;
+  alert('AI 生成完成！');
+}
+
+// ==================== EXPORT / IMPORT ====================
+function exportPlanData() {
+  const blob = new Blob([JSON.stringify(planData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `hasselblad_growth_plan_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importPlanData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (imported.NA || imported.EU) {
+        planData = imported;
+        savePlanData();
+        renderPlan();
+        alert('导入成功！');
+      } else {
+        alert('文件格式不正确，需要包含 NA 和/或 EU 数据。');
+      }
+    } catch(err) {
+      alert('导入失败：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ==================== ROLE DESCRIPTIONS ====================
+const DEFAULT_ROLES = {
+  Zola: '广告优化 / 活动落地页 / 分期免息 / 权益盘点 / 欧洲新国家 / 活动（春季） / SEO / 页面优化 / 会员 / 新增页面内容 / EDM（协同）',
+  Xiaodu: '固件升级活动 / 多样化物流 / 联盟 / SEO & Blog / EDM（协同）',
+};
+let roleData = {};
+let editingRole = null;
+
+function loadRoleData() {
+  const saved = localStorage.getItem('hasselblad_roles');
+  const ver = localStorage.getItem('hasselblad_roles_ver');
+  if (saved && ver === '2') { try { roleData = JSON.parse(saved); return; } catch(e) {} }
+  roleData = { ...DEFAULT_ROLES };
+  localStorage.setItem('hasselblad_roles_ver', '2');
+  saveRoleData();
+}
+
+function saveRoleData() {
+  localStorage.setItem('hasselblad_roles', JSON.stringify(roleData));
+}
+
+function renderRoles() {
+  document.getElementById('roleDescZola').textContent = roleData.Zola || '';
+  document.getElementById('roleDescXiaodu').textContent = roleData.Xiaodu || '';
+}
+
+function openRoleEdit(name) {
+  editingRole = name;
+  document.getElementById('roleEditTitle').textContent = `编辑 ${name} 职责`;
+  document.getElementById('roleEditText').value = roleData[name] || '';
+  document.getElementById('roleEditModal').style.display = 'flex';
+}
+
+function saveRoleEdit() {
+  if (!editingRole) return;
+  roleData[editingRole] = document.getElementById('roleEditText').value.trim();
+  saveRoleData();
+  renderRoles();
+  document.getElementById('roleEditModal').style.display = 'none';
+  editingRole = null;
+}
+
+loadRoleData();
+renderRoles();
+
+// ==================== TASK MANAGEMENT ====================
+const DEFAULT_TASKS = [
+  {id:1, q:'Q2',dim:'流量',task:'广告',desc:'1.转化广告\n-留邮测试\n-Demand Gen-看是否能转常规\n-Meta广告测试开启（需要确定ROI的benchmark）\n-素材持续测试&优化\n-by周review广告架构（不同广告类型的表现/RMKT的投放量级）\n2.MKT广告\n-监控进站流量数量&质量，配合RMKT\n-定期输出转化侧洞察',owner:'Zola',priority:'P1',status:'进行中'},
+  {id:2, q:'Q2',dim:'转化',task:'分期免息',desc:'申请分期免息（Affirm）',owner:'Zola',priority:'P1',status:'待启动'},
+  {id:3, q:'Q2',dim:'转化',task:'权益盘点',desc:'权益盘点：订阅有礼、买赠等落地',owner:'Zola',priority:'P1',status:'待启动'},
+  {id:4, q:'Q2',dim:'其他增长',task:'新开国家',desc:'欧洲新国家站点上线评估',owner:'Zola',priority:'P1',status:'待启动'},
+  {id:5, q:'Q2',dim:'用户运营',task:'EDM',desc:'1.拉新（需要定目标绝对值）\n-广告留邮测试（看是否能转常规）\n-订阅有礼权益（配合活动进行）\n2.邮件体系优化\n-EDM Campaign邮件频率&内容方向+定期复盘优化\n-Flow邮件优化：Welcome / Browse Abandon / Cart Abandon\n-用户分层和打标规则落地',owner:['Zola','Xiaodu'],priority:'P1',status:'待启动'},
+  {id:6, q:'Q2',dim:'转化',task:'活动',desc:'6月固件升级活动策划&落地',owner:'Xiaodu',priority:'P1',status:'待启动'},
+  {id:7, q:'Q2',dim:'转化',task:'活动',desc:'春季活动',owner:'Zola',priority:'P1',status:'进行中'},
+  {id:8, q:'Q2',dim:'转化',task:'物流优化',desc:'多样化物流方式上线（待IBG排期）',owner:'Xiaodu',priority:'P2',status:'待启动'},
+  {id:9, q:'Q2',dim:'流量',task:'SEO',desc:'SEO服务商入场&推进合作',owner:'Zola',priority:'P2',status:'待启动'},
+  {id:10,q:'Q2',dim:'页面优化',task:'页面优化',desc:'用户体验优化（热力图分析&迭代）',owner:'Zola',priority:'P2',status:'待启动'},
+  {id:11,q:'Q2',dim:'用户运营',task:'会员',desc:'会员体系方案设计',owner:'Zola',priority:'P2',status:'待启动'},
+  {id:12,q:'Q2',dim:'流量',task:'联盟',desc:'联盟机会点调研',owner:'Xiaodu',priority:'P2',status:'待启动'},
+  {id:13,q:'Q2',dim:'流量',task:'SEO',desc:'Blog内容输出（1个月1-2篇）',owner:'Xiaodu',priority:'P2',status:'进行中'},
+  {id:14,q:'Q2',dim:'页面优化',task:'新增页面内容',desc:'1.视频教程页面开发\n2.Blog页面开发上线',owner:'Zola',priority:'P2',status:'待启动'},
+  {id:15,q:'Q2',dim:'页面优化',task:'活动落地页',desc:'活动落地页设计&开发&上线',owner:'Zola',priority:'P0',status:'进行中'},
+];
+
+let taskData = [];
+let taskFilterQ = 'all';
+let taskFilterOwner = 'all';
+let taskFilterDim = 'all';
+let editingTaskId = null;
+let taskNextId = 100;
+
+function loadTaskData() {
+  const saved = localStorage.getItem('hasselblad_tasks');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      taskData = parsed.filter(t => t.q === 'Q2');
+      // Normalize priority - ensure it's P0/P1/P2/P3 format
+      taskData.forEach(t => {
+        if (!t.priority || !['P0','P1','P2','P3'].includes(t.priority)) {
+          t.priority = 'P2';
+        }
+      });
+      taskNextId = Math.max(...taskData.map(t=>t.id), 99) + 1;
+      return;
+    } catch(e) {}
+  }
+  taskData = JSON.parse(JSON.stringify(DEFAULT_TASKS));
+  taskNextId = 100;
+}
+
+function saveTaskData() {
+  localStorage.setItem('hasselblad_tasks', JSON.stringify(taskData));
+}
+
+function switchTaskQ(q, btn) {
+  taskFilterQ = q;
+  btn.parentElement.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderTaskTable();
+}
+
+function switchTaskOwner(owner, btn) {
+  taskFilterOwner = owner;
+  btn.parentElement.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderTaskTable();
+}
+
+function switchTaskDim(dim, btn) {
+  taskFilterDim = dim;
+  btn.parentElement.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderTaskTable();
+}
+
+function renderTaskTable() {
+  let filtered = taskData;
+  if (taskFilterOwner !== 'all') {
+    filtered = filtered.filter(t => {
+      const owners = Array.isArray(t.owner) ? t.owner : [t.owner];
+      return owners.includes(taskFilterOwner);
+    });
+  }
+  if (taskFilterDim !== 'all') {
+    filtered = filtered.filter(t => t.dim === taskFilterDim);
+  }
+  const pOrder = {P0:0,P1:1,P2:2,P3:3};
+  filtered = [...filtered].sort((a,b) => (pOrder[a.priority] ?? 9) - (pOrder[b.priority] ?? 9));
+
+  const tbody = document.getElementById('taskTableBody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-secondary);">暂无任务</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(t => {
+    const descHtml = t.desc.replace(/\n/g, '<br>');
+    const owners = Array.isArray(t.owner) ? t.owner : [t.owner];
+    const ownerHtml = owners.map(o => `<span class="owner-tag owner-${o}">${o}</span>`).join(' ');
+    return `
+    <tr>
+      <td><span class="priority-tag priority-${t.priority}">${t.priority}</span></td>
+      <td><span class="dim-tag">${t.dim}</span></td>
+      <td style="font-weight:600;">${t.task || ''}</td>
+      <td style="white-space:pre-line;line-height:1.6;">${descHtml}</td>
+      <td>${ownerHtml}</td>
+      <td><span class="status-tag status-${t.status}">${t.status}</span></td>
+      <td><button class="task-edit-btn" onclick="openTaskEdit(${t.id})">&#9998;</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openTaskEdit(id) {
+  editingTaskId = id;
+  const t = taskData.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('taskEditTitle').textContent = '编辑任务';
+  document.getElementById('taskFormDim').value = t.dim;
+  document.getElementById('taskFormTask').value = t.task || '';
+  document.getElementById('taskFormDesc').value = t.desc;
+  const owners = Array.isArray(t.owner) ? t.owner : [t.owner];
+  document.getElementById('taskFormOwnerZola').checked = owners.includes('Zola');
+  document.getElementById('taskFormOwnerXiaodu').checked = owners.includes('Xiaodu');
+  document.getElementById('taskFormPriority').value = t.priority;
+  document.getElementById('taskFormStatus').value = t.status;
+  document.getElementById('taskDeleteBtn').style.display = 'inline-block';
+  document.getElementById('taskEditModal').style.display = 'flex';
+}
+
+function addNewTask() {
+  editingTaskId = null;
+  document.getElementById('taskEditTitle').textContent = '新增任务';
+  document.getElementById('taskFormDim').value = '流量';
+  document.getElementById('taskFormTask').value = '';
+  document.getElementById('taskFormDesc').value = '';
+  document.getElementById('taskFormOwnerZola').checked = true;
+  document.getElementById('taskFormOwnerXiaodu').checked = false;
+  document.getElementById('taskFormPriority').value = 'P1';
+  document.getElementById('taskFormStatus').value = '待启动';
+  document.getElementById('taskDeleteBtn').style.display = 'none';
+  document.getElementById('taskEditModal').style.display = 'flex';
+}
+
+function closeTaskEditModal() {
+  document.getElementById('taskEditModal').style.display = 'none';
+  editingTaskId = null;
+}
+
+function saveTask() {
+  const owners = [];
+  if (document.getElementById('taskFormOwnerZola').checked) owners.push('Zola');
+  if (document.getElementById('taskFormOwnerXiaodu').checked) owners.push('Xiaodu');
+  if (owners.length === 0) { alert('请至少选择一个负责人'); return; }
+  const data = {
+    q: 'Q2',
+    dim: document.getElementById('taskFormDim').value,
+    task: document.getElementById('taskFormTask').value.trim(),
+    desc: document.getElementById('taskFormDesc').value.trim(),
+    owner: owners.length === 1 ? owners[0] : owners,
+    priority: document.getElementById('taskFormPriority').value,
+    status: document.getElementById('taskFormStatus').value,
+  };
+  if (!data.desc) { alert('请输入任务描述'); return; }
+
+  if (editingTaskId !== null) {
+    const idx = taskData.findIndex(t => t.id === editingTaskId);
+    if (idx >= 0) Object.assign(taskData[idx], data);
+  } else {
+    taskData.push({ id: taskNextId++, ...data });
+  }
+  saveTaskData();
+  renderTaskTable();
+  closeTaskEditModal();
+}
+
+function deleteTask() {
+  if (editingTaskId === null) return;
+  if (!confirm('确认删除此任务？')) return;
+  taskData = taskData.filter(t => t.id !== editingTaskId);
+  saveTaskData();
+  renderTaskTable();
+  closeTaskEditModal();
+}
+
+// ==================== EXPORT ====================
+function toggleExportMenu() {
+  const dd = document.getElementById('exportDropdown');
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('exportDropdown');
+  const btn = document.getElementById('exportMenuBtn');
+  if (dd && btn && !btn.contains(e.target) && !dd.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
+
+function getExportData() {
+  const pOrder = {P0:0,P1:1,P2:2,P3:3};
+  const sorted = [...taskData].sort((a,b) => (pOrder[a.priority] ?? 9) - (pOrder[b.priority] ?? 9));
+  return sorted.map(t => {
+    const owners = Array.isArray(t.owner) ? t.owner.join(' / ') : t.owner;
+    return {
+      '优先级': t.priority,
+      '维度': t.dim,
+      '主要任务': t.task || '',
+      '任务描述': t.desc,
+      '负责人': owners,
+      '状态': t.status,
+    };
+  });
+}
+
+function exportTaskExcel() {
+  document.getElementById('exportDropdown').style.display = 'none';
+  const data = getExportData();
+  const ws = XLSX.utils.json_to_sheet(data);
+  // Set column widths
+  ws['!cols'] = [
+    {wch:8},{wch:10},{wch:14},{wch:50},{wch:12},{wch:10}
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Q2任务分工');
+  XLSX.writeFile(wb, `哈苏Q2任务分工_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+async function exportTaskImage() {
+  document.getElementById('exportDropdown').style.display = 'none';
+  const target = document.getElementById('tab2');
+  const canvas = await html2canvas(target, {
+    backgroundColor: '#f5f6fa',
+    scale: 2,
+    useCORS: true,
+    logging: false,
+  });
+  const link = document.createElement('a');
+  link.download = `哈苏Q2任务分工_${new Date().toISOString().slice(0,10)}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+async function exportTaskPDF() {
+  document.getElementById('exportDropdown').style.display = 'none';
+  const target = document.getElementById('tab2');
+  const canvas = await html2canvas(target, {
+    backgroundColor: '#f5f6fa',
+    scale: 2,
+    useCORS: true,
+    logging: false,
+  });
+  const imgData = canvas.toDataURL('image/png');
+  const { jsPDF } = window.jspdf;
+  const imgW = canvas.width;
+  const imgH = canvas.height;
+  // A4 landscape for wide tables
+  const pdfW = 297;
+  const pdfH = 210;
+  const ratio = Math.min(pdfW / imgW, (pdfH * 10) / imgH);
+  const w = imgW * ratio;
+  const h = imgH * ratio;
+  const pageH = pdfH - 20;
+  const pdf = new jsPDF({ orientation: h > pdfH ? 'portrait' : 'landscape', unit: 'mm', format: 'a4' });
+  // If content fits one page
+  if (h <= pageH + 10) {
+    pdf.addImage(imgData, 'PNG', 10, 10, w - 20, h);
+  } else {
+    // Multi-page
+    let y = 0;
+    const sliceH = (pageH / h) * imgH;
+    let page = 0;
+    while (y < imgH) {
+      if (page > 0) pdf.addPage();
+      const sliceCanvas = document.createElement('canvas');
+      sliceCanvas.width = imgW;
+      sliceCanvas.height = Math.min(sliceH, imgH - y);
+      const ctx = sliceCanvas.getContext('2d');
+      ctx.drawImage(canvas, 0, y, imgW, sliceCanvas.height, 0, 0, imgW, sliceCanvas.height);
+      const sliceData = sliceCanvas.toDataURL('image/png');
+      const sliceRatio = (pdfW - 20) / imgW;
+      pdf.addImage(sliceData, 'PNG', 10, 10, imgW * sliceRatio, sliceCanvas.height * sliceRatio);
+      y += sliceH;
+      page++;
+    }
+  }
+  pdf.save(`哈苏Q2任务分工_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+// ==================== READONLY MODE ====================
+const IS_READONLY = new URLSearchParams(window.location.search).get('mode') === 'readonly';
+
+if (IS_READONLY) {
+  document.addEventListener('DOMContentLoaded', () => {
+    // Hide all edit-related elements
+    const hideSelectors = [
+      '.cell-actions',           // plan cell edit/AI buttons
+      '#aiSettingsPanel',        // AI settings panel
+      '.settings-btn',           // AI settings button
+      '#editModal',              // plan edit modal
+      '#taskEditModal',          // task edit modal
+      '#roleEditModal',          // role edit modal
+      '.role-edit-hint',         // role "click to edit" hint
+      '#exportMenuBtn',          // export dropdown (keep for readonly? no, hide)
+      '#importFile',
+    ];
+    hideSelectors.forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => el.style.display = 'none');
+    });
+    // Hide specific buttons by text content
+    document.querySelectorAll('button').forEach(btn => {
+      const t = btn.textContent.trim();
+      if (['AI 生成全部','导出','导入','+ 新增任务','AI 设置'].includes(t) || t.startsWith('导出')) {
+        btn.style.display = 'none';
+      }
+    });
+    // Disable role card clicks
+    document.querySelectorAll('.role-card').forEach(el => {
+      el.style.cursor = 'default';
+      el.onclick = null;
+      el.removeAttribute('onclick');
+    });
+    // Disable plan cell clicks
+    document.querySelectorAll('.plan-cell-wrap').forEach(el => {
+      el.style.cursor = 'default';
+      el.onclick = null;
+      el.removeAttribute('onclick');
+    });
+    // Hide task edit buttons (pencil icons)
+    document.querySelectorAll('.task-edit-btn').forEach(el => el.style.display = 'none');
+    // Hide the "操作" column header
+    const ths = document.querySelectorAll('#taskTable th');
+    if (ths.length > 0) ths[ths.length - 1].style.display = 'none';
+    // Hide operation cells in task rows
+    document.querySelectorAll('#taskTableBody tr').forEach(tr => {
+      const tds = tr.querySelectorAll('td');
+      if (tds.length > 0) tds[tds.length - 1].style.display = 'none';
+    });
+    // Add readonly badge to header
+    const subtitle = document.querySelector('.header .subtitle');
+    if (subtitle) subtitle.textContent += ' | 只读模式';
+  });
+  // Override renderTaskTable to also hide edit buttons after re-render
+  const origRenderTaskTable = renderTaskTable;
+  renderTaskTable = function() {
+    origRenderTaskTable();
+    document.querySelectorAll('.task-edit-btn').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('#taskTableBody tr').forEach(tr => {
+      const tds = tr.querySelectorAll('td');
+      if (tds.length > 0) tds[tds.length - 1].style.display = 'none';
+    });
+  };
+  // Override renderPlan to hide cell actions after re-render
+  const origRenderPlan = renderPlan;
+  renderPlan = function() {
+    origRenderPlan();
+    document.querySelectorAll('.cell-actions').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.plan-cell-wrap').forEach(el => {
+      el.style.cursor = 'default';
+      el.removeAttribute('onclick');
+    });
+  };
+}
+
+// ==================== INIT ====================
+loadPlanData();
+renderPlan();
+loadTaskData();
+renderTaskTable();
+
+function renderProductTable() {
+  const store = currentRegion === 'na' ? 'US' : 'EU';
+  const processed = processData();
+  const products = processed[store];
+  
+  // Build rows
+  const rows = [];
+  for (const [product, info] of Object.entries(products)) {
+    const m1 = info.months['2026-01'] || 0;
+    const m2 = info.months['2026-02'] || 0;
+    const m3 = info.months['2026-03'] || 0;
+    const total = m1 + m2 + m3;
+    rows.push({ type: info.type, product, m1, m2, m3, total });
+  }
+  
+  // Sort by total desc
+  rows.sort((a,b) => b.total - a.total);
+  
+  const grandTotal = rows.reduce((s,r) => s + r.total, 0);
+  
+  const tbody = document.getElementById('productTableBody');
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.type}</td>
+      <td>${r.product}</td>
+      <td class="text-right">${r.m1 > 0 ? '¥' + Math.round(r.m1).toLocaleString() : '-'}</td>
+      <td class="text-right">${r.m2 > 0 ? '¥' + Math.round(r.m2).toLocaleString() : '-'}</td>
+      <td class="text-right">${r.m3 > 0 ? '¥' + Math.round(r.m3).toLocaleString() : '-'}</td>
+      <td class="text-right" style="font-weight:600;">¥${Math.round(r.total).toLocaleString()}</td>
+      <td class="text-right">${((r.total/grandTotal)*100).toFixed(1)}%</td>
+    </tr>
+  `).join('');
+}
+
+renderProductTable();
+</script>
+</body>
+</html>
