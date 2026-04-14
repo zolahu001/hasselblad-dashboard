@@ -36,6 +36,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .header h1 { font-size: 24px; font-weight: 700; letter-spacing: 0.5px; color: #fff; }
 .header .subtitle { color: rgba(255,255,255,0.75); font-size: 14px; margin-top: 4px; }
 
+.sync-indicator {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(4px);
+  transition: all 0.3s;
+}
+.sync-indicator.syncing { background: rgba(251,191,36,0.3); }
+.sync-indicator.synced { background: rgba(16,185,129,0.3); }
+.sync-indicator.error { background: rgba(239,68,68,0.3); }
+
 .tabs {
   display: flex;
   background: var(--card);
@@ -689,8 +703,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 <body>
 
 <div class="header">
-  <h1>HASSELBLAD 欧美店铺增长规划看板</h1>
-  <div class="subtitle">2026年度 | 北美 + 欧洲商城 | 数据更新至 Q1</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <h1>HASSELBLAD 欧美店铺增长规划看板</h1>
+      <div class="subtitle">2026年度 | 北美 + 欧洲商城 | 数据更新至 Q1</div>
+    </div>
+    <div id="syncStatus" class="sync-indicator" style="display:none;">
+      <span id="syncText">已同步</span>
+    </div>
+  </div>
 </div>
 
 <div class="tabs">
@@ -2533,6 +2554,99 @@ async function exportTaskPDF() {
   }
   pdf.save(`哈苏Q2任务分工_${new Date().toISOString().slice(0,10)}.pdf`);
 }
+
+// ==================== CLOUD SYNC ====================
+const CLOUD_URL = 'https://jsonblob.com/api/jsonBlob/019d89d6-ff49-7566-b762-ddfb381adbea';
+let syncTimer = null;
+
+function showSyncStatus(state, text) {
+  const el = document.getElementById('syncStatus');
+  const textEl = document.getElementById('syncText');
+  el.style.display = 'inline-block';
+  el.className = 'sync-indicator ' + state;
+  textEl.textContent = text;
+  if (state === 'synced') {
+    setTimeout(() => { el.style.display = 'none'; }, 3000);
+  }
+}
+
+async function pushToCloud() {
+  if (IS_READONLY) return;
+  showSyncStatus('syncing', '同步中...');
+  try {
+    const payload = {
+      tasks: taskData,
+      plan: planData,
+      roles: roleData,
+      updatedAt: new Date().toISOString(),
+    };
+    const resp = await fetch(CLOUD_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (resp.ok) {
+      showSyncStatus('synced', '已同步');
+    } else {
+      showSyncStatus('error', '同步失败');
+    }
+  } catch(e) {
+    showSyncStatus('error', '同步失败');
+  }
+}
+
+function debouncedSync() {
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(pushToCloud, 1500);
+}
+
+async function pullFromCloud() {
+  try {
+    const resp = await fetch(CLOUD_URL);
+    if (!resp.ok) return false;
+    const data = await resp.json();
+    if (!data || (!data.tasks && !data.plan && !data.roles)) return false;
+    // Only load cloud data if it has content
+    if (data.tasks && data.tasks.length > 0) {
+      taskData = data.tasks;
+      localStorage.setItem('hasselblad_tasks', JSON.stringify(taskData));
+    }
+    if (data.plan && (data.plan.NA || data.plan.EU)) {
+      planData = data.plan;
+      localStorage.setItem('hasselblad_growth_plan', JSON.stringify(planData));
+    }
+    if (data.roles && (data.roles.Zola || data.roles.Xiaodu)) {
+      roleData = data.roles;
+      localStorage.setItem('hasselblad_roles', JSON.stringify(roleData));
+    }
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+
+// Override save functions to trigger cloud sync
+const _origSaveTaskData = saveTaskData;
+saveTaskData = function() { _origSaveTaskData(); debouncedSync(); };
+
+const _origSavePlanData = savePlanData;
+savePlanData = function() { _origSavePlanData(); debouncedSync(); };
+
+const _origSaveRoleData = saveRoleData;
+saveRoleData = function() { _origSaveRoleData(); debouncedSync(); };
+
+// On page load: pull from cloud first, then render
+(async function initCloudSync() {
+  const pulled = await pullFromCloud();
+  if (pulled) {
+    renderPlan();
+    renderTaskTable();
+    renderRoles();
+  }
+  if (!IS_READONLY) {
+    showSyncStatus('synced', pulled ? '已从云端加载' : '本地数据');
+  }
+})();
 
 // ==================== READONLY MODE ====================
 const IS_READONLY = new URLSearchParams(window.location.search).get('mode') === 'readonly';
