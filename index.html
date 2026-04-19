@@ -2676,6 +2676,23 @@ savePlanData = function() { _origSavePlanData(); debouncedSync(); };
 const _origSaveRoleData = saveRoleData;
 saveRoleData = function() { _origSaveRoleData(); debouncedSync(); };
 
+function downloadBackup() {
+  const payload = {
+    tasks: taskData,
+    plan: planData,
+    roles: roleData,
+    backupTime: new Date().toISOString(),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'hasselblad_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showSyncStatus('synced', '已备份到本地');
+}
+
 // On page load: pull from cloud first, then render
 (async function initCloudSync() {
   const pulled = await pullFromCloud();
