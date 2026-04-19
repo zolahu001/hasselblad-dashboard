@@ -726,6 +726,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     <div id="syncStatus" class="sync-indicator" style="display:none;">
       <span id="syncText">已同步</span>
     </div>
+    <div style="display:flex;gap:6px;align-items:center;" id="headerActions">
+      <button onclick="downloadBackup()" style="padding:4px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-size:11px;cursor:pointer;" title="手动下载备份文件">备份</button>
+      <button onclick="document.getElementById('restoreFile').click()" style="padding:4px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-size:11px;cursor:pointer;" title="从备份文件恢复数据">恢复</button>
+      <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreFromBackup(event)">
+    </div>
   </div>
 </div>
 
@@ -2662,15 +2667,67 @@ async function pullFromCloud() {
   }
 }
 
-// Override save functions to trigger cloud sync
+// Override save functions to trigger cloud sync + auto backup
+let backupTimer = null;
+let saveCount = 0;
+
+function triggerAutoBackup() {
+  saveCount++;
+  // Auto-download backup every 5 saves, or debounced 30s after last save
+  if (backupTimer) clearTimeout(backupTimer);
+  backupTimer = setTimeout(downloadBackup, 30000);
+  if (saveCount % 5 === 0) downloadBackup();
+}
+
+function downloadBackup() {
+  if (IS_READONLY) return;
+  const payload = {
+    tasks: taskData,
+    plan: planData,
+    roles: roleData,
+    backupTime: new Date().toISOString(),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `hasselblad_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showSyncStatus('synced', '已备份到本地');
+}
+
+function restoreFromBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.tasks) { taskData = data.tasks; localStorage.setItem('hasselblad_tasks', JSON.stringify(taskData)); }
+      if (data.plan) { planData = data.plan; localStorage.setItem('hasselblad_growth_plan', JSON.stringify(planData)); }
+      if (data.roles) { roleData = data.roles; localStorage.setItem('hasselblad_roles', JSON.stringify(roleData)); }
+      renderPlan();
+      renderTaskTable();
+      renderRoles();
+      pushToCloud();
+      showSyncStatus('synced', '已从备份恢复');
+    } catch(err) {
+      alert('恢复失败：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
 const _origSaveTaskData = saveTaskData;
-saveTaskData = function() { _origSaveTaskData(); debouncedSync(); };
+saveTaskData = function() { _origSaveTaskData(); debouncedSync(); triggerAutoBackup(); };
 
 const _origSavePlanData = savePlanData;
-savePlanData = function() { _origSavePlanData(); debouncedSync(); };
+savePlanData = function() { _origSavePlanData(); debouncedSync(); triggerAutoBackup(); };
 
 const _origSaveRoleData = saveRoleData;
-saveRoleData = function() { _origSaveRoleData(); debouncedSync(); };
+saveRoleData = function() { _origSaveRoleData(); debouncedSync(); triggerAutoBackup(); };
 
 // On page load: pull from cloud first, then render
 (async function initCloudSync() {
